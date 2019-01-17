@@ -11,3 +11,23 @@
 证件类型    身份证(IDENTITY_CARD)
 证件号码    341183197509069658
 账户余额    99999.00
+
+{
+    "alipay_trade_query_response": {
+        "code": "10000",
+        "msg": "Success",
+        "buyer_logon_id": "mlb***@sandbox.com",
+        "buyer_pay_amount": "0.00",
+        "buyer_user_id": "2088102177261092",
+        "buyer_user_type": "PRIVATE",
+        "invoice_amount": "0.00",
+        "out_trade_no": "201911721195120",
+        "point_amount": "0.00",
+        "receipt_amount": "0.00",
+        "send_pay_date": "2019-01-17 21:22:48",
+        "total_amount": "0.01",
+        "trade_no": "2019011722001461090500289564",
+        "trade_status": "TRADE_SUCCESS"
+    },
+    "sign": "JCp3A64YJ1Hn87JgqkPqPSXqDhq1j4LyFo6Dv0Bmr4TI84A66Xpi6kF6Kvvn+3DBWi4y/eoZGfgpYpPXThv7S9rHZeA0GABOsX/FxM7osKtT/JntDCI5+Kr0F/F+2epCcNUAqoov4juVqcK4AFCtL8LSePXxB7V2seD5ZVb/xrvhgZoHzEziN0YzBeBmM8cr9AMNTw6eTCDmMngUp5xS/X+4BRTVgiiAsn0Fg7Aw81SMaIYI1JnEnatceZ/uqvO4ve54/m8l92Ujjb/lFXWM3jzAoPR7FZaUXVo5YzZ8mlyx0tjjYh7IVJ8PGMF0uxhQBYsZ1Cm29P5+j1c190CQuQ=="
+}
