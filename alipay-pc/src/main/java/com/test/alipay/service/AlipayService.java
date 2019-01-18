@@ -16,6 +16,12 @@ import java.util.Map;
 @Service
 public class AlipayService {
 
+    private AlipayClient alipayClient;
+
+    public AlipayService() {
+        alipayClient = AlipayUtil.getAlipayClient();
+    }
+
     /**
      * 支付
      *
@@ -27,9 +33,6 @@ public class AlipayService {
      * @throws Exception
      */
     public AlipayTradePagePayResponse pagePay(String outTradeNo, String totalAmount, String subject, String body) throws Exception {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = AlipayUtil.getAlipayClient();
-
         //设置请求参数
         AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
         alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
@@ -59,9 +62,6 @@ public class AlipayService {
      * @throws Exception
      */
     public AlipayTradeQueryResponse pagePayQuery(String tradeNo, String outTradeNo) throws Exception {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = AlipayUtil.getAlipayClient();
-
         //设置请求参数
         AlipayTradeQueryRequest alipayRequest = new AlipayTradeQueryRequest();
 
@@ -89,9 +89,6 @@ public class AlipayService {
      * @throws Exception
      */
     public AlipayTradeRefundResponse refund(String tradeNo, String outTradeNo, String refundAmount, String refundReason, String refundNo) throws Exception {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = AlipayUtil.getAlipayClient();
-
         //设置请求参数
         AlipayTradeRefundRequest alipayRequest = new AlipayTradeRefundRequest();
 
@@ -120,9 +117,6 @@ public class AlipayService {
      * @throws Exception
      */
     public AlipayTradeFastpayRefundQueryResponse refundQuery(String tradeNo, String outTradeNo, String refundNo) throws Exception {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = AlipayUtil.getAlipayClient();
-
         //设置请求参数
         AlipayTradeFastpayRefundQueryRequest alipayRequest = new AlipayTradeFastpayRefundQueryRequest();
 
@@ -148,9 +142,6 @@ public class AlipayService {
      * @throws Exception
      */
     public AlipayTradeCloseResponse close(String tradeNo, String outTradeNo) throws Exception {
-        //获得初始化的AlipayClient
-        AlipayClient alipayClient = AlipayUtil.getAlipayClient();
-
         //设置请求参数
         AlipayTradeCloseRequest alipayRequest = new AlipayTradeCloseRequest();
 
@@ -162,6 +153,28 @@ public class AlipayService {
 
         //请求
         AlipayTradeCloseResponse resp = alipayClient.execute(alipayRequest);
+
+        return resp;
+    }
+
+    /**
+     * 对账单查询
+     *
+     * @param billType
+     * @param billDate
+     * @return
+     * @throws Exception
+     */
+    public AlipayDataDataserviceBillDownloadurlQueryResponse billQuery(String billType, String billDate) throws Exception {
+        AlipayDataDataserviceBillDownloadurlQueryRequest alipayRequest = new AlipayDataDataserviceBillDownloadurlQueryRequest();
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("bill_type", billType);
+        params.put("bill_date", billDate);
+
+        alipayRequest.setBizContent(new Gson().toJson(params));
+
+        AlipayDataDataserviceBillDownloadurlQueryResponse resp = alipayClient.execute(alipayRequest);
 
         return resp;
     }

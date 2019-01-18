@@ -1,14 +1,13 @@
 package com.test.alipay.controller;
 
-import com.alipay.api.response.AlipayTradeCloseResponse;
-import com.alipay.api.response.AlipayTradeFastpayRefundQueryResponse;
-import com.alipay.api.response.AlipayTradeQueryResponse;
-import com.alipay.api.response.AlipayTradeRefundResponse;
+import com.alipay.api.response.*;
+import com.google.gson.Gson;
 import com.test.alipay.dao.TradeDao;
 import com.test.alipay.model.Trade;
 import com.test.alipay.service.AlipayService;
 import com.test.alipay.util.AlipayUtil;
 import com.test.alipay.util.ResponseBean;
+import com.test.alipay.util.WebUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -57,7 +56,7 @@ public class AlipayController {
         String result = alipayService.pagePay(outTradeNo, totalAmount, subject, body).getBody();
 
         //输出form表单
-        writeHtml(response, result);
+        WebUtil.writeHtml(result, response);
     }
 
     /**
@@ -408,12 +407,26 @@ public class AlipayController {
         return "success";
     }
 
-    private void writeHtml(HttpServletResponse response, String result) throws Exception {
-        response.setContentType("text/html; charset=utf-8");
-        PrintWriter out = response.getWriter();
-        out.println(result);
-        out.flush();
-        out.close();
+    /**
+     * 对账单下载
+     *
+     * @param request
+     * @param response
+     * @throws Exception
+     */
+    @RequestMapping("billDownload")
+    public void billDownload(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String billType = request.getParameter("billType");
+        String billDate = request.getParameter("billDate");
+
+        //对账单查询
+        AlipayDataDataserviceBillDownloadurlQueryResponse resp = alipayService.billQuery(billType, billDate);
+        if (!resp.isSuccess()) {
+            WebUtil.writeHtml(new Gson().toJson(ResponseBean.getFailure("对账单查询失败", resp.getBody())), response);
+            return;
+        }
+
+        WebUtil.download(resp.getBillDownloadUrl(), response);
     }
 
     @RequestMapping("deleteTrade")
