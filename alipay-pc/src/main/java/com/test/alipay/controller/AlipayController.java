@@ -37,12 +37,13 @@ public class AlipayController {
      * @param response
      * @throws Exception
      */
-    @RequestMapping("pagePay")
-    public void pagePay(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    @RequestMapping("pay")
+    public void pay(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String outTradeNo = request.getParameter("WIDout_trade_no");
         String totalAmount = request.getParameter("WIDtotal_amount");
         String subject = request.getParameter("WIDsubject");
         String body = request.getParameter("WIDbody");
+        String way = request.getParameter("way");
 
         //本地保存
         Trade trade = new Trade();
@@ -53,7 +54,12 @@ public class AlipayController {
         tradeDao.save(trade);
 
         //请求支付，返回form表单
-        String result = alipayService.pagePay(outTradeNo, totalAmount, subject, body).getBody();
+        String result = null;
+        if ("pc".equals(way)) {
+            result = alipayService.pagePay(outTradeNo, totalAmount, subject, body).getBody();
+        } else {
+            result = alipayService.wapPay(outTradeNo, totalAmount, subject, body).getBody();
+        }
 
         //输出form表单
         WebUtil.writeHtml(result, response);
@@ -66,14 +72,14 @@ public class AlipayController {
      * @param response
      * @throws Exception
      */
-    @RequestMapping("pagePayQuery")
+    @RequestMapping("query")
     @ResponseBody
-    public ResponseBean pagePayQuery(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public ResponseBean query(HttpServletRequest request, HttpServletResponse response) throws Exception {
         String tradeNo = request.getParameter("WIDTQtrade_no");
         String outTradeNo = request.getParameter("WIDTQout_trade_no");
 
         //交易查询
-        AlipayTradeQueryResponse resp = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp.getBody());
         }
@@ -81,15 +87,15 @@ public class AlipayController {
         //输出
         return ResponseBean.getSuccess(resp.getBody());
     }
-    @RequestMapping("pagePayQueryById")
+    @RequestMapping("queryById")
     @ResponseBody
-    public ResponseBean pagePayQueryById(Integer id) throws Exception {
+    public ResponseBean queryById(Integer id) throws Exception {
         Trade trade = tradeDao.findOne(id);
         String tradeNo = trade.getTradeNo();
         String outTradeNo = trade.getOutTradeNo();
 
         //交易查询
-        AlipayTradeQueryResponse resp = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp.getBody());
         }
@@ -135,7 +141,7 @@ public class AlipayController {
         }
 
         //交易查询
-        AlipayTradeQueryResponse resp3 = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp3 = alipayService.query(tradeNo, outTradeNo);
         if (!resp3.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp3.getBody());
         }
@@ -176,7 +182,7 @@ public class AlipayController {
         }
 
         //交易查询
-        AlipayTradeQueryResponse resp3 = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp3 = alipayService.query(tradeNo, outTradeNo);
         if (!resp3.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp3.getBody());
         }
@@ -257,7 +263,7 @@ public class AlipayController {
         }
 
         //交易查询
-        AlipayTradeQueryResponse resp2 = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp2 = alipayService.query(tradeNo, outTradeNo);
         if (!resp2.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp2.getBody());
         }
@@ -284,7 +290,7 @@ public class AlipayController {
         }
 
         //交易查询
-        AlipayTradeQueryResponse resp2 = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp2 = alipayService.query(tradeNo, outTradeNo);
         if (!resp2.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp2.getBody());
         }
@@ -345,7 +351,7 @@ public class AlipayController {
         }
 
         //交易查询
-        AlipayTradeQueryResponse resp = alipayService.pagePayQuery(tradeNo, outTradeNo);
+        AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
             return ResponseBean.getFailure("交易查询失败", resp.getBody());
         }

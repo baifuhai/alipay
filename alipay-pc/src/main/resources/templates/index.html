@@ -139,7 +139,7 @@ h2 {
 	display: block;
 }
 
-#btn-dd {
+.btn-dd {
 	margin: 20px;
 	text-align: center;
 }
@@ -213,7 +213,7 @@ table td {
 			<h2 id="tab5" name="tab">交易关闭</h2>
 		</div>
 
-		<form name=alipayment action="/alipay/pagePay" method=post target="_blank">
+		<form name=alipayment action="/alipay/pay" method=post target="_blank">
 			<div id="body1" class="show" name="divcontent">
 				<dl class="content">
 					<dt>商户订单号：</dt>
@@ -236,8 +236,16 @@ table td {
 						<input id="WIDbody" name="WIDbody" />
 					</dd>
 					<hr class="one_line">
+					<dt>方式：</dt>
+					<dd>
+						<select name="way">
+							<option value="pc">pc</option>
+							<option value="wap">wap</option>
+						</select>
+					</dd>
+					<hr class="one_line">
 					<dt></dt>
-					<dd id="btn-dd">
+					<dd class="btn-dd">
 						<span class="new-btn-login-sp">
 							<button class="new-btn-login" type="submit" style="text-align: center;">付款</button>
 						</span> <span class="note-help">如果您点击“付款”按钮，即表示您同意该次的执行操作。</span>
@@ -246,7 +254,7 @@ table td {
 			</div>
 		</form>
 
-		<form name=tradequery action="/alipay/pagePayQuery" method=post target="_blank">
+		<form name=tradequery action="/alipay/query" method=post target="_blank">
 			<div id="body2" class="tab-content" name="divcontent">
 				<dl class="content">
 					<dt>支付宝交易号：</dt>
@@ -260,7 +268,7 @@ table td {
 					</dd>
 					<hr class="one_line">
 					<dt></dt>
-					<dd id="btn-dd">
+					<dd class="btn-dd">
 						<span class="new-btn-login-sp">
 							<button class="new-btn-login" type="submit" style="text-align: center;">交易查询</button>
 						</span> <span class="note-help">商户订单号与支付宝交易号二选一，如果您点击“交易查询”按钮，即表示您同意该次的执行操作。</span>
@@ -298,7 +306,7 @@ table td {
 					</dd>
 					<hr class="one_line">
 					<dt></dt>
-					<dd id="btn-dd">
+					<dd class="btn-dd">
 						<span class="new-btn-login-sp">
 							<button class="new-btn-login" type="submit" style="text-align: center;">退款</button>
 						</span> <span class="note-help">商户订单号与支付宝交易号二选一，如果您点击“退款”按钮，即表示您同意该次的执行操作。</span>
@@ -326,7 +334,7 @@ table td {
 					</dd>
 					<hr class="one_line">
 					<dt></dt>
-					<dd id="btn-dd">
+					<dd class="btn-dd">
 						<span class="new-btn-login-sp">
 							<button class="new-btn-login" type="submit" style="text-align: center;">退款查询</button>
 						</span> <span class="note-help">商户订单号与支付宝交易号二选一，如果您点击“退款查询”按钮，即表示您同意该次的执行操作。</span>
@@ -349,7 +357,7 @@ table td {
 					</dd>
 					<hr class="one_line">
 					<dt></dt>
-					<dd id="btn-dd">
+					<dd class="btn-dd">
 						<span class="new-btn-login-sp">
 							<button class="new-btn-login" type="submit" style="text-align: center;">交易关闭</button>
 						</span> <span class="note-help">商户订单号与支付宝交易号二选一，如果您点击“交易关闭”按钮，即表示您同意该次的执行操作。</span>
@@ -385,7 +393,7 @@ table td {
 				<td th:text="${trade.refundReason}">退款原因</td>
 				<td th:text="${trade.refundNo}">退款请求号</td>
 				<td th:text="${trade.status}">状态</td>
-				<td><a th:href="@{/alipay/pagePayQueryById(id=${trade.id})}" target="_blank">查询</a></td>
+				<td><a th:href="@{/alipay/queryById(id=${trade.id})}" target="_blank">查询</a></td>
 				<td><a th:href="@{/alipay/refundById(id=${trade.id})}" target="_blank">退款</a></td>
 				<td><a th:href="@{/alipay/refundQueryById(id=${trade.id})}" target="_blank">退款查询</a></td>
 				<td><a th:href="@{/alipay/closeById(id=${trade.id})}" target="_blank">关闭交易</a></td>
@@ -434,9 +442,10 @@ table td {
 		sNow += String(vNow.getMinutes() < 10 ? "0" + vNow.getMinutes() : vNow.getMinutes());
 		sNow += String(vNow.getSeconds() < 10 ? "0" + vNow.getSeconds() : vNow.getSeconds());
 		sNow += String(vNow.getMilliseconds() < 10 ? "00" + vNow.getMilliseconds() : (vNow.getMilliseconds() < 100 ? "0" + vNow.getMilliseconds() : vNow.getMilliseconds()));
-		document.getElementById("WIDout_trade_no").value =  sNow;
-		document.getElementById("WIDsubject").value = "测试";
-		document.getElementById("WIDtotal_amount").value = "0.01";
+		document.getElementById("WIDout_trade_no").value = sNow;
+        document.getElementById("WIDtotal_amount").value = "0.01";
+        document.getElementById("WIDsubject").value = "测试";
+        document.getElementById("WIDbody").value = "商品";
 	}
 	GetDateNow();
 </script>

@@ -35,6 +35,12 @@ public class AlipayUtil {
     // 支付宝网关
     public static final String GATEWAY_URL = "https://openapi.alipaydev.com/gateway.do";
 
+    // pc产品码
+    public static final String PRODUCT_CODE_PC = "FAST_INSTANT_TRADE_PAY";
+
+    // wap产品码
+    public static final String PRODUCT_CODE_WAP = "QUICK_WAP_WAY";
+
     /**
      * 获取AlipayClient实例
      *

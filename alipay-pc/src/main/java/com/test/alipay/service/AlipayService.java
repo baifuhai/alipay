@@ -1,10 +1,10 @@
 package com.test.alipay.service;
 
 import com.alipay.api.AlipayClient;
+import com.alipay.api.domain.*;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.*;
 import com.alipay.api.response.*;
-import com.google.gson.Gson;
 import com.test.alipay.util.AlipayUtil;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class AlipayService {
     }
 
     /**
-     * 支付
+     * pc支付
      *
      * @param outTradeNo 商户订单号，必填
      * @param totalAmount 付款金额，必填
@@ -38,17 +38,48 @@ public class AlipayService {
         alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
         alipayRequest.setNotifyUrl(AlipayUtil.NOTIFY_URL);
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("out_trade_no", outTradeNo);
-        params.put("product_code", "FAST_INSTANT_TRADE_PAY");
-        params.put("total_amount", totalAmount);
-        params.put("subject", subject);
-        params.put("body", body);
+        AlipayTradePagePayModel model = new AlipayTradePagePayModel();
+        model.setOutTradeNo(outTradeNo);
+        model.setProductCode(AlipayUtil.PRODUCT_CODE_PC);
+        model.setTotalAmount(totalAmount);
+        model.setSubject(subject);
+        model.setBody(body);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         //请求
         AlipayTradePagePayResponse resp = alipayClient.pageExecute(alipayRequest);
+
+        return resp;
+    }
+
+    /**
+     * wap支付
+     *
+     * @param outTradeNo 商户订单号，必填
+     * @param totalAmount 付款金额，必填
+     * @param subject 订单名称，必填
+     * @param body 商品描述，可选
+     * @return
+     * @throws Exception
+     */
+    public AlipayTradeWapPayResponse wapPay(String outTradeNo, String totalAmount, String subject, String body) throws Exception {
+        //设置请求参数
+        AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();
+        alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
+        alipayRequest.setNotifyUrl(AlipayUtil.NOTIFY_URL);
+
+        AlipayTradeWapPayModel model = new AlipayTradeWapPayModel();
+        model.setOutTradeNo(outTradeNo);
+        model.setProductCode(AlipayUtil.PRODUCT_CODE_WAP);
+        model.setTotalAmount(totalAmount);
+        model.setSubject(subject);
+        model.setBody(body);
+
+        alipayRequest.setBizModel(model);
+
+        //请求
+        AlipayTradeWapPayResponse resp = alipayClient.pageExecute(alipayRequest);
 
         return resp;
     }
@@ -61,15 +92,15 @@ public class AlipayService {
      * @return
      * @throws Exception
      */
-    public AlipayTradeQueryResponse pagePayQuery(String tradeNo, String outTradeNo) throws Exception {
+    public AlipayTradeQueryResponse query(String tradeNo, String outTradeNo) throws Exception {
         //设置请求参数
         AlipayTradeQueryRequest alipayRequest = new AlipayTradeQueryRequest();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("trade_no", tradeNo);
-        params.put("out_trade_no", outTradeNo);
+        AlipayTradeQueryModel model = new AlipayTradeQueryModel();
+        model.setTradeNo(tradeNo);
+        model.setOutTradeNo(outTradeNo);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         //请求
         AlipayTradeQueryResponse resp = alipayClient.execute(alipayRequest);
@@ -92,14 +123,14 @@ public class AlipayService {
         //设置请求参数
         AlipayTradeRefundRequest alipayRequest = new AlipayTradeRefundRequest();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("trade_no", tradeNo);
-        params.put("out_trade_no", outTradeNo);
-        params.put("refund_amount", refundAmount);
-        params.put("refund_reason", refundReason);
-        params.put("out_request_no", refundNo);
+        AlipayTradeRefundModel model = new AlipayTradeRefundModel();
+        model.setTradeNo(tradeNo);
+        model.setOutTradeNo(outTradeNo);
+        model.setRefundAmount(refundAmount);
+        model.setRefundReason(refundReason);
+        model.setOutRequestNo(refundNo);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         //请求
         AlipayTradeRefundResponse resp = alipayClient.execute(alipayRequest);
@@ -120,12 +151,12 @@ public class AlipayService {
         //设置请求参数
         AlipayTradeFastpayRefundQueryRequest alipayRequest = new AlipayTradeFastpayRefundQueryRequest();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("trade_no", tradeNo);
-        params.put("out_trade_no", outTradeNo);
-        params.put("out_request_no", refundNo);
+        AlipayTradeFastpayRefundQueryModel model = new AlipayTradeFastpayRefundQueryModel();
+        model.setTradeNo(tradeNo);
+        model.setOutTradeNo(outTradeNo);
+        model.setOutRequestNo(refundNo);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         //请求
         AlipayTradeFastpayRefundQueryResponse resp = alipayClient.execute(alipayRequest);
@@ -145,11 +176,11 @@ public class AlipayService {
         //设置请求参数
         AlipayTradeCloseRequest alipayRequest = new AlipayTradeCloseRequest();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("trade_no", tradeNo);
-        params.put("out_trade_no", outTradeNo);
+        AlipayTradeCloseModel model = new AlipayTradeCloseModel();
+        model.setTradeNo(tradeNo);
+        model.setOutTradeNo(outTradeNo);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         //请求
         AlipayTradeCloseResponse resp = alipayClient.execute(alipayRequest);
@@ -168,11 +199,11 @@ public class AlipayService {
     public AlipayDataDataserviceBillDownloadurlQueryResponse billQuery(String billType, String billDate) throws Exception {
         AlipayDataDataserviceBillDownloadurlQueryRequest alipayRequest = new AlipayDataDataserviceBillDownloadurlQueryRequest();
 
-        Map<String, Object> params = new HashMap<>();
-        params.put("bill_type", billType);
-        params.put("bill_date", billDate);
+        AlipayDataDataserviceBillDownloadurlQueryModel model = new AlipayDataDataserviceBillDownloadurlQueryModel();
+        model.setBillType(billType);
+        model.setBillDate(billDate);
 
-        alipayRequest.setBizContent(new Gson().toJson(params));
+        alipayRequest.setBizModel(model);
 
         AlipayDataDataserviceBillDownloadurlQueryResponse resp = alipayClient.execute(alipayRequest);
 
