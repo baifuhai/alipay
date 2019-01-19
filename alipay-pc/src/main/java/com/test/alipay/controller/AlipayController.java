@@ -53,16 +53,18 @@ public class AlipayController {
         trade.setBody(body);
         tradeDao.save(trade);
 
-        //请求支付，返回form表单
+        //请求支付
         String result = null;
         if ("pc".equals(way)) {
             result = alipayService.pagePay(outTradeNo, totalAmount, subject, body).getBody();
-        } else {
+            WebUtil.writeHtml(result, response);//输出form表单
+        } else if ("wap".equals(way)) {
             result = alipayService.wapPay(outTradeNo, totalAmount, subject, body).getBody();
+            WebUtil.writeHtml(result, response);//输出form表单
+        } else if ("app".equals(way)) {
+            result = alipayService.appPay(outTradeNo, totalAmount, subject, body).getBody();
+            WebUtil.writeJson(new Gson().toJson(ResponseBean.getSuccess(result)), response);//输出json
         }
-
-        //输出form表单
-        WebUtil.writeHtml(result, response);
     }
 
     /**
@@ -305,6 +307,18 @@ public class AlipayController {
 
     /**
      * 同步通知页面
+     * app_id
+     * method
+     * sign_type
+     * sign
+     * charset
+     * timestamp
+     * version
+     * auth_app_id
+     * out_trade_no
+     * trade_no
+     * total_amount
+     * seller_id
      *
      * @param request
      * @param response

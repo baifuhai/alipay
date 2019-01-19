@@ -85,6 +85,37 @@ public class AlipayService {
     }
 
     /**
+     * app支付
+     *
+     * @param outTradeNo 商户订单号，必填
+     * @param totalAmount 付款金额，必填
+     * @param subject 订单名称，必填
+     * @param body 商品描述，可选
+     * @return
+     * @throws Exception
+     */
+    public AlipayTradeAppPayResponse appPay(String outTradeNo, String totalAmount, String subject, String body) throws Exception {
+        //设置请求参数
+        AlipayTradeAppPayRequest alipayRequest = new AlipayTradeAppPayRequest();
+        alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
+        alipayRequest.setNotifyUrl(AlipayUtil.NOTIFY_URL);
+
+        AlipayTradeAppPayModel model = new AlipayTradeAppPayModel();
+        model.setOutTradeNo(outTradeNo);
+        model.setProductCode(AlipayUtil.PRODUCT_CODE_APP);
+        model.setTotalAmount(totalAmount);
+        model.setSubject(subject);
+        model.setBody(body);
+
+        alipayRequest.setBizModel(model);
+
+        //请求
+        AlipayTradeAppPayResponse resp = alipayClient.sdkExecute(alipayRequest);
+
+        return resp;
+    }
+
+    /**
      * 交易查询
      *
      * @param tradeNo 支付宝交易号

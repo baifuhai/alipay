@@ -25,6 +25,21 @@ public class WebUtil {
     }
 
     /**
+     * 输出json
+     *
+     * @param result
+     * @param response
+     * @throws Exception
+     */
+    public static void writeJson(String result, HttpServletResponse response) throws Exception {
+        response.setContentType("application/json; charset=utf-8");
+        PrintWriter out = response.getWriter();
+        out.println(result);
+        out.flush();
+        out.close();
+    }
+
+    /**
      * 下载
      *
      * @param sUrl

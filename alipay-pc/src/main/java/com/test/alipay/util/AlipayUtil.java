@@ -41,6 +41,9 @@ public class AlipayUtil {
     // wap产品码
     public static final String PRODUCT_CODE_WAP = "QUICK_WAP_WAY";
 
+    // app产品码
+    public static final String PRODUCT_CODE_APP = "QUICK_MSECURITY_PAY";
+
     /**
      * 获取AlipayClient实例
      *
