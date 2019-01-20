@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 
 @RequestMapping("alipay")
 @Controller
@@ -44,6 +45,8 @@ public class AlipayController {
         String subject = request.getParameter("WIDsubject");
         String body = request.getParameter("WIDbody");
         String way = request.getParameter("way");
+
+        totalAmount = new DecimalFormat("#.00").format(Integer.parseInt(totalAmount));
 
         //本地保存
         Trade trade = new Trade();
@@ -83,11 +86,11 @@ public class AlipayController {
         //交易查询
         AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp);
         }
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
     @RequestMapping("queryById")
     @ResponseBody
@@ -99,7 +102,7 @@ public class AlipayController {
         //交易查询
         AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp);
         }
 
         //更改订单状态
@@ -108,7 +111,7 @@ public class AlipayController {
         tradeDao.save(trade);
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
 
     /**
@@ -129,7 +132,7 @@ public class AlipayController {
         //退款
         AlipayTradeRefundResponse resp = alipayService.refund(tradeNo, outTradeNo, refundAmount, refundReason, refundNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("退款失败", resp.getBody());
+            return ResponseBean.getFailure("退款失败", resp);
         }
 
         if (StringUtils.isBlank(refundNo)) {
@@ -139,23 +142,26 @@ public class AlipayController {
         //退款查询
         AlipayTradeFastpayRefundQueryResponse resp2 = alipayService.refundQuery(tradeNo, outTradeNo, refundNo);
         if (!resp2.isSuccess()) {
-            return ResponseBean.getFailure("退款查询失败", resp2.getBody());
+            return ResponseBean.getFailure("退款查询失败", resp2);
         }
 
         //交易查询
         AlipayTradeQueryResponse resp3 = alipayService.query(tradeNo, outTradeNo);
         if (!resp3.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp3.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp3);
         }
         
         //更改订单状态
         Trade trade = tradeDao.findByOutTradeNo(outTradeNo);
         trade.setTradeNo(resp3.getTradeNo());
         trade.setStatus(resp3.getTradeStatus());
+        trade.setRefundAmount(refundAmount);
+        trade.setRefundReason(refundReason);
+        trade.setRefundNo(refundNo);
         tradeDao.save(trade);
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
     @RequestMapping("refundById")
     @ResponseBody
@@ -170,7 +176,7 @@ public class AlipayController {
         //退款
         AlipayTradeRefundResponse resp = alipayService.refund(tradeNo, outTradeNo, refundAmount, refundReason, refundNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("退款失败", resp.getBody());
+            return ResponseBean.getFailure("退款失败", resp);
         }
 
         if (StringUtils.isBlank(refundNo)) {
@@ -180,22 +186,25 @@ public class AlipayController {
         //退款查询
         AlipayTradeFastpayRefundQueryResponse resp2 = alipayService.refundQuery(tradeNo, outTradeNo, refundNo);
         if (!resp2.isSuccess()) {
-            return ResponseBean.getFailure("退款查询失败", resp2.getBody());
+            return ResponseBean.getFailure("退款查询失败", resp2);
         }
 
         //交易查询
         AlipayTradeQueryResponse resp3 = alipayService.query(tradeNo, outTradeNo);
         if (!resp3.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp3.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp3);
         }
 
         //更改订单状态
         trade.setTradeNo(resp3.getTradeNo());
         trade.setStatus(resp3.getTradeStatus());
+        trade.setRefundAmount(refundAmount);
+        trade.setRefundReason(refundReason);
+        trade.setRefundNo(refundNo);
         tradeDao.save(trade);
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
 
     /**
@@ -218,11 +227,11 @@ public class AlipayController {
         //退款查询
         AlipayTradeFastpayRefundQueryResponse resp = alipayService.refundQuery(tradeNo, outTradeNo, refundNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("退款查询失败", resp.getBody());
+            return ResponseBean.getFailure("退款查询失败", resp);
         }
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
     @RequestMapping("refundQueryById")
     @ResponseBody
@@ -239,11 +248,11 @@ public class AlipayController {
         //退款查询
         AlipayTradeFastpayRefundQueryResponse resp = alipayService.refundQuery(tradeNo, outTradeNo, refundNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("退款查询失败", resp.getBody());
+            return ResponseBean.getFailure("退款查询失败", resp);
         }
 
         //输出
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
 
     /**
@@ -261,13 +270,13 @@ public class AlipayController {
         //关闭交易
         AlipayTradeCloseResponse resp = alipayService.close(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("关闭交易失败", resp.getBody());
+            return ResponseBean.getFailure("关闭交易失败", resp);
         }
 
         //交易查询
         AlipayTradeQueryResponse resp2 = alipayService.query(tradeNo, outTradeNo);
         if (!resp2.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp2.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp2);
         }
 
         //更改订单状态
@@ -276,7 +285,7 @@ public class AlipayController {
         trade.setStatus(resp2.getTradeStatus());
         tradeDao.save(trade);
 
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
     @RequestMapping("closeById")
     @ResponseBody
@@ -288,13 +297,13 @@ public class AlipayController {
         //关闭交易
         AlipayTradeCloseResponse resp = alipayService.close(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("关闭交易失败", resp.getBody());
+            return ResponseBean.getFailure("关闭交易失败", resp);
         }
 
         //交易查询
         AlipayTradeQueryResponse resp2 = alipayService.query(tradeNo, outTradeNo);
         if (!resp2.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp2.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp2);
         }
 
         //更改订单状态
@@ -302,7 +311,7 @@ public class AlipayController {
         trade.setStatus(resp2.getTradeStatus());
         tradeDao.save(trade);
 
-        return ResponseBean.getSuccess(resp.getBody());
+        return ResponseBean.getSuccess(resp);
     }
 
     /**
@@ -367,7 +376,7 @@ public class AlipayController {
         //交易查询
         AlipayTradeQueryResponse resp = alipayService.query(tradeNo, outTradeNo);
         if (!resp.isSuccess()) {
-            return ResponseBean.getFailure("交易查询失败", resp.getBody());
+            return ResponseBean.getFailure("交易查询失败", resp);
         }
 
         //更改订单状态
@@ -442,13 +451,19 @@ public class AlipayController {
         //对账单查询
         AlipayDataDataserviceBillDownloadurlQueryResponse resp = alipayService.billQuery(billType, billDate);
         if (!resp.isSuccess()) {
-            WebUtil.writeHtml(new Gson().toJson(ResponseBean.getFailure("对账单查询失败", resp.getBody())), response);
+            WebUtil.writeHtml(new Gson().toJson(ResponseBean.getFailure("对账单查询失败", resp)), response);
             return;
         }
 
         WebUtil.download(resp.getBillDownloadUrl(), response);
     }
 
+    /**
+     * 删除订单
+     *
+     * @param id
+     * @return
+     */
     @RequestMapping("deleteTrade")
     @ResponseBody
     public String deleteTrade(Integer id) {

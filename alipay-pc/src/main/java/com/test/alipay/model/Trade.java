@@ -21,7 +21,7 @@ public class Trade {
     @Column(name = "out_trade_no")
     private String outTradeNo;
 
-    @Column(name = "trade_amount")
+    @Column(name = "total_amount")
     private String totalAmount;
 
     @Column(name = "subject")

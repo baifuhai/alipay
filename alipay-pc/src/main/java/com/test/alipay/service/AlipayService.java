@@ -97,7 +97,7 @@ public class AlipayService {
     public AlipayTradeAppPayResponse appPay(String outTradeNo, String totalAmount, String subject, String body) throws Exception {
         //设置请求参数
         AlipayTradeAppPayRequest alipayRequest = new AlipayTradeAppPayRequest();
-        alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
+        //alipayRequest.setReturnUrl(AlipayUtil.RETURN_URL);
         alipayRequest.setNotifyUrl(AlipayUtil.NOTIFY_URL);
 
         AlipayTradeAppPayModel model = new AlipayTradeAppPayModel();
