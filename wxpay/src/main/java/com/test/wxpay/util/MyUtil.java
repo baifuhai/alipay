@@ -3,7 +3,6 @@ package com.test.wxpay.util;
 import com.github.wxpay.sdk.WXPayUtil;
 import com.test.wxpay.config.MyWxpayConfig;
 
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +22,14 @@ public class MyUtil {
         return sdf.format(new Date()) + new Random().nextInt(1000);
     }
 
+    /**
+     * 统一下单后获取到prepay_id，再签名返回给前端调起微信客户端支付
+     *
+     * @param prepayId
+     * @param config
+     * @return
+     * @throws Exception
+     */
     public static Map<String, String> getAppParamsMap(String prepayId, MyWxpayConfig config) throws Exception {
         Map<String, String> params = new HashMap<>();
         params.put("appid", config.getAppID());

@@ -10,11 +10,12 @@ public class MyConfig {
 
     @Bean
     public WXPay wxPay(MyWxpayConfig wxpayConfig) {
-        return new WXPay(wxpayConfig, WXPayConstants.SignType.HMACSHA256, true);
+        //return new WXPay(wxpayConfig, WXPayConstants.SignType.HMACSHA256);
+        return new WXPay(wxpayConfig, WXPayConstants.SignType.MD5, true);
     }
 
     @Bean
-    public MyWxpayConfig wxpayConfig() {
+    public MyWxpayConfig wxpayConfig() throws Exception {
         return new MyWxpayConfig();
     }
 
