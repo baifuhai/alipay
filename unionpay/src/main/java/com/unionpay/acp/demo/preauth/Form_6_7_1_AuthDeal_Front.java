@@ -46,7 +46,7 @@ public class Form_6_7_1_AuthDeal_Front extends HttpServlet {
 	
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		SDKConfig config = SDKConfig.getConfig();
+		SDKConfig config = SDKConfig.config;
 
 		/**
 		 * 请求银联接入地址，获取证书文件，证书路径等相关参数初始化到SDKConfig类中
@@ -54,7 +54,7 @@ public class Form_6_7_1_AuthDeal_Front extends HttpServlet {
 		 * 如果是在web应用开发里,这个方法可使用监听的方式写入缓存,无须在这出现
 		 */
 		//这里已经将加载属性文件的方法挪到了web/AutoLoadServlet.java中
-		//SDKConfig.getConfig().loadPropertiesFromSrc(); //从classpath加载acp_sdk.properties文件
+		//config.loadPropertiesFromSrc(); //从classpath加载acp_sdk.properties文件
 		
 		//前台页面传过来的
 		String merId = req.getParameter("merId");
@@ -64,8 +64,8 @@ public class Form_6_7_1_AuthDeal_Front extends HttpServlet {
 		
 		/***银联全渠道系统，产品参数，除了encoding自行选择外其他不需修改***/
 		requestData.put("version", config.getVersion());   			  //版本号，全渠道默认值
-		requestData.put("encoding", SDKConfig.encoding); 			  //字符集编码，可以使用UTF-8,GBK两种方式
-		requestData.put("signMethod", SDKConfig.getConfig().getSignMethod()); //签名方法
+		requestData.put("encoding", config.getEncoding()); 			  //字符集编码，可以使用UTF-8,GBK两种方式
+		requestData.put("signMethod", config.getSignMethod()); //签名方法
 		requestData.put("txnType", "02");               			  //交易类型 ，02：预授权
 		requestData.put("txnSubType", "01");            			  //交易子类型， 01：预授权
 		requestData.put("bizType", "000201");           			  //业务类型，B2C网关支付，手机wap支付
@@ -106,10 +106,10 @@ public class Form_6_7_1_AuthDeal_Front extends HttpServlet {
 		//////////////////////////////////////////////////
 		
 		/**请求参数设置完毕，以下对请求参数进行签名并生成html表单，将表单写入浏览器跳转打开银联页面**/
-		Map<String, String> submitFromData = AcpService.sign(requestData,SDKConfig.encoding);  //报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
+		Map<String, String> submitFromData = AcpService.sign(requestData, config.getEncoding());  //报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
 
-		String requestFrontUrl = SDKConfig.getConfig().getFrontRequestUrl();  //获取请求银联的前台地址：对应属性文件acp_sdk.properties文件中的acpsdk.frontTransUrl
-		String html = AcpService.createAutoFormHtml(requestFrontUrl, submitFromData,SDKConfig.encoding);   //生成自动跳转的Html表单
+		String requestFrontUrl = config.getFrontTransUrl();  //获取请求银联的前台地址：对应属性文件acp_sdk.properties文件中的acpsdk.frontTransUrl
+		String html = AcpService.createAutoFormHtml(requestFrontUrl, submitFromData, config.getEncoding());   //生成自动跳转的Html表单
 		
 		LogUtil.writeLog("打印请求HTML，此为请求报文，为联调排查问题的依据："+html);
 		//将生成的html写到浏览器中完成自动跳转打开银联支付页面；这里调用signData之后，将html写到浏览器跳转到银联页面之前均不能对html中的表单项的名称和值进行修改，如果修改会导致验签不通过

@@ -17,13 +17,12 @@ import com.unionpay.acp.sdk.SDKConfig;
 public class EncryptCerUpdateQuery {
 
 	public static void main(String[] args) {
-		//加载classpath下的acp_sdk.properties文件内容
-		SDKConfig config = SDKConfig.getConfig();
+		SDKConfig config = SDKConfig.config;
 		
 		Map<String, String> contentData = new HashMap<String, String>();
 		contentData.put("version", config.getVersion());                  		     //版本号
-		contentData.put("encoding", SDKConfig.encoding);            		 //字符集编码 可以使用UTF-8,GBK两种方式
-		contentData.put("signMethod", SDKConfig.getConfig().getSignMethod());    //签名方法  01:RSA证书方式  11：支持散列方式验证SHA-256 12：支持散列方式验证SM3
+		contentData.put("encoding", config.getEncoding());            		 //字符集编码 可以使用UTF-8,GBK两种方式
+		contentData.put("signMethod", config.getSignMethod());    //签名方法  01:RSA证书方式  11：支持散列方式验证SHA-256 12：支持散列方式验证SM3
 		contentData.put("txnType", "95");                              			 //交易类型 95-银联加密公钥更新查询
 		contentData.put("txnSubType", "00");                           			 //交易子类型  默认00
 		contentData.put("bizType", "000000");                          			 //业务类型  默认
@@ -36,16 +35,16 @@ public class EncryptCerUpdateQuery {
 		contentData.put("txnTime", DemoBase.getCurrentTime());         		     //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效                         //账号类型
 
 		//报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
-		Map<String, String> reqData = AcpService.sign(contentData, SDKConfig.encoding);
+		Map<String, String> reqData = AcpService.sign(contentData, config.getEncoding());
 
 		//交易请求url从配置文件读取对应属性文件acp_sdk.properties中的 acpsdk.backTransUrl
-		String requestBackUrl = SDKConfig.getConfig().getBackRequestUrl();
+		String requestBackUrl = config.getBackTransUrl();
 
 		//发送请求报文并接受同步应答（默认连接超时时间30秒，读取返回结果超时时间30秒）;这里调用signData之后，调用submitUrl之前不能对submitFromData中的键值对做任何修改，如果修改会导致验签不通过
-		Map<String, String> rspData = AcpService.post(reqData, requestBackUrl, SDKConfig.encoding);
+		Map<String, String> rspData = AcpService.post(reqData, requestBackUrl, config.getEncoding());
 
 		if(!rspData.isEmpty()){
-			if(AcpService.validate(rspData, SDKConfig.encoding)){
+			if(AcpService.validate(rspData, config.getEncoding())){
 				LogUtil.writeLog("验证签名成功");
 				String respCode = rspData.get("respCode") ;
 				if(("00").equals(respCode)){

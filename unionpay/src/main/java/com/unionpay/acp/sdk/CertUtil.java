@@ -117,24 +117,23 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties中配置的私钥路径和密码 加载签名证书
 	 */
 	private static void initSignCert() {
-		if(!"01".equals(SDKConfig.getConfig().getSignMethod())){
+		SDKConfig config = SDKConfig.config;
+		if(!"01".equals(config.getSignMethod())){
 			LogUtil.writeLog("非rsa签名方式，不加载签名证书。");
 			return;
 		}
-		if (SDKConfig.getConfig().getSignCertPath() == null 
-				|| SDKConfig.getConfig().getSignCertPwd() == null
-				|| SDKConfig.getConfig().getSignCertType() == null) {
-			LogUtil.writeErrorLog("WARN: " + SDKConfig.SDK_SIGNCERT_PATH + "或" + SDKConfig.SDK_SIGNCERT_PWD 
-					+ "或" + SDKConfig.SDK_SIGNCERT_TYPE + "为空。 停止加载签名证书。");
+		if (config.getSignCertPath() == null
+				|| config.getSignCertPwd() == null
+				|| config.getSignCertType() == null) {
+			LogUtil.writeErrorLog("WARN: SIGNCERT_PATH 或 SIGNCERT_PWD 或 SIGNCERT_TYPE 为空。 停止加载签名证书。");
 			return;
 		}
 		if (null != keyStore) {
 			keyStore = null;
 		}
 		try {
-			keyStore = getKeyInfo(SDKConfig.getConfig().getSignCertPath(),
-					SDKConfig.getConfig().getSignCertPwd(), SDKConfig
-							.getConfig().getSignCertType());
+			keyStore = getKeyInfo(config.getSignCertPath(),
+					config.getSignCertPwd(), config.getSignCertType());
 			LogUtil.writeLog("InitSignCert Successful. CertId=["
 					+ getSignCertId() + "]");
 		} catch (IOException e) {
@@ -146,9 +145,10 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties配置路径 加载敏感信息加密证书
 	 */
 	private static void initMiddleCert() {
-		LogUtil.writeLog("加载中级证书==>"+SDKConfig.getConfig().getMiddleCertPath());
-		if (!isEmpty(SDKConfig.getConfig().getMiddleCertPath())) {
-			middleCert = initCert(SDKConfig.getConfig().getMiddleCertPath());
+		SDKConfig config = SDKConfig.config;
+		LogUtil.writeLog("加载中级证书==>"+config.getMiddleCertPath());
+		if (!isEmpty(config.getMiddleCertPath())) {
+			middleCert = initCert(config.getMiddleCertPath());
 			LogUtil.writeLog("Load MiddleCert Successful");
 		} else {
 			LogUtil.writeLog("WARN: acpsdk.middle.path is empty");
@@ -159,9 +159,10 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties配置路径 加载敏感信息加密证书
 	 */
 	private static void initRootCert() {
-		LogUtil.writeLog("加载根证书==>"+SDKConfig.getConfig().getRootCertPath());
-		if (!isEmpty(SDKConfig.getConfig().getRootCertPath())) {
-			rootCert = initCert(SDKConfig.getConfig().getRootCertPath());
+		SDKConfig config = SDKConfig.config;
+		LogUtil.writeLog("加载根证书==>"+config.getRootCertPath());
+		if (!isEmpty(config.getRootCertPath())) {
+			rootCert = initCert(config.getRootCertPath());
 			LogUtil.writeLog("Load RootCert Successful");
 		} else {
 			LogUtil.writeLog("WARN: acpsdk.rootCert.path is empty");
@@ -172,9 +173,10 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties配置路径 加载银联公钥上级证书（中级证书）
 	 */
 	private static void initEncryptCert() {
-		LogUtil.writeLog("加载敏感信息加密证书==>"+SDKConfig.getConfig().getEncryptCertPath());
-		if (!isEmpty(SDKConfig.getConfig().getEncryptCertPath())) {
-			encryptCert = initCert(SDKConfig.getConfig().getEncryptCertPath());
+		SDKConfig config = SDKConfig.config;
+		LogUtil.writeLog("加载敏感信息加密证书==>"+config.getEncryptCertPath());
+		if (!isEmpty(config.getEncryptCertPath())) {
+			encryptCert = initCert(config.getEncryptCertPath());
 			LogUtil.writeLog("Load EncryptCert Successful");
 		} else {
 			LogUtil.writeLog("WARN: acpsdk.encryptCert.path is empty");
@@ -185,10 +187,11 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties配置路径 加载磁道公钥
 	 */
 	private static void initTrackKey() {
-		if (!isEmpty(SDKConfig.getConfig().getEncryptTrackKeyModulus())
-				&& !isEmpty(SDKConfig.getConfig().getEncryptTrackKeyExponent())) {
-			encryptTrackKey = getPublicKey(SDKConfig.getConfig().getEncryptTrackKeyModulus(), 
-					SDKConfig.getConfig().getEncryptTrackKeyExponent());
+		SDKConfig config = SDKConfig.config;
+		if (!isEmpty(config.getEncryptTrackKeyModulus())
+				&& !isEmpty(config.getEncryptTrackKeyExponent())) {
+			encryptTrackKey = getPublicKey(config.getEncryptTrackKeyModulus(),
+					config.getEncryptTrackKeyExponent());
 			LogUtil.writeLog("LoadEncryptTrackKey Successful");
 		} else {
 			LogUtil.writeLog("WARN: acpsdk.encryptTrackKey.modulus or acpsdk.encryptTrackKey.exponent is empty");
@@ -199,12 +202,13 @@ public class CertUtil {
 	 * 用配置文件acp_sdk.properties配置路径 加载验证签名证书
 	 */
 	private static void initValidateCertFromDir() {
-		if(!"01".equals(SDKConfig.getConfig().getSignMethod())){
+		SDKConfig config = SDKConfig.config;
+		if(!"01".equals(config.getSignMethod())){
 			LogUtil.writeLog("非rsa签名方式，不加载验签证书。");
 			return;
 		}
 		certMap.clear();
-		String dir = SDKConfig.getConfig().getValidateCertDir();
+		String dir = config.getValidateCertDir();
 		LogUtil.writeLog("加载验证签名证书目录==>" + dir +" 注：如果请求报文中version=5.1.0那么此验签证书目录使用不到，可以不需要设置（version=5.0.0必须设置）。");
 		if (isEmpty(dir)) {
 			LogUtil.writeErrorLog("WARN: acpsdk.validateCert.dir is empty");
@@ -311,14 +315,14 @@ public class CertUtil {
 	 * @return
 	 */
 	public static PrivateKey getSignCertPrivateKey() {
+		SDKConfig config = SDKConfig.config;
 		try {
 			Enumeration<String> aliasenum = keyStore.aliases();
 			String keyAlias = null;
 			if (aliasenum.hasMoreElements()) {
 				keyAlias = aliasenum.nextElement();
 			}
-			PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias,
-					SDKConfig.getConfig().getSignCertPwd().toCharArray());
+			PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, config.getSignCertPwd().toCharArray());
 			return privateKey;
 		} catch (KeyStoreException e) {
 			LogUtil.writeErrorLog("getSignCertPrivateKey Error", e);
@@ -369,8 +373,9 @@ public class CertUtil {
 	 * @return
 	 */
 	public static PublicKey getEncryptCertPublicKey() {
+		SDKConfig config = SDKConfig.config;
 		if (null == encryptCert) {
-			String path = SDKConfig.getConfig().getEncryptCertPath();
+			String path = config.getEncryptCertPath();
 			if (!isEmpty(path)) {
 				encryptCert = initCert(path);
 				return encryptCert.getPublicKey();
@@ -455,8 +460,9 @@ public class CertUtil {
 	 * @return
 	 */
 	public static String getEncryptCertId() {
+		SDKConfig config = SDKConfig.config;
 		if (null == encryptCert) {
-			String path = SDKConfig.getConfig().getEncryptCertPath();
+			String path = config.getEncryptCertPath();
 			if (!isEmpty(path)) {
 				encryptCert = initCert(path);
 				return encryptCert.getSerialNumber().toString();
@@ -586,12 +592,13 @@ public class CertUtil {
 	 * @return
 	 */
 	public static X509Certificate getMiddleCert() {
+		SDKConfig config = SDKConfig.config;
 		if (null == middleCert) {
-			String path = SDKConfig.getConfig().getMiddleCertPath();
+			String path = config.getMiddleCertPath();
 			if (!isEmpty(path)) {
 				initMiddleCert();
 			} else {
-				LogUtil.writeErrorLog(SDKConfig.SDK_MIDDLECERT_PATH + " not set in " + SDKConfig.FILE_NAME);
+				LogUtil.writeErrorLog("MIDDLECERT_PATH not set in FILE_NAME");
 				return null;
 			}
 		}
@@ -603,12 +610,13 @@ public class CertUtil {
 	 * @return
 	 */
 	public static X509Certificate getRootCert() {
+		SDKConfig config = SDKConfig.config;
 		if (null == rootCert) {
-			String path = SDKConfig.getConfig().getRootCertPath();
+			String path = config.getRootCertPath();
 			if (!isEmpty(path)) {
 				initRootCert();
 			} else {
-				LogUtil.writeErrorLog(SDKConfig.SDK_ROOTCERT_PATH + " not set in " + SDKConfig.FILE_NAME);
+				LogUtil.writeErrorLog("ROOTCERT_PATH not set in FILE_NAME");
 				return null;
 			}
 		}
@@ -702,7 +710,7 @@ public class CertUtil {
 	 * @return
 	 */
 	public static boolean verifyCertificate(X509Certificate cert) {
-		
+		SDKConfig config = SDKConfig.config;
 		if ( null == cert) {
 			LogUtil.writeErrorLog("cert must Not null");
 			return false;
@@ -718,7 +726,7 @@ public class CertUtil {
 			return false;
 		}
 		
-		if(SDKConfig.getConfig().isIfValidateCNName()){
+		if(config.isIfValidateCNName()){
 			// 验证公钥是否属于银联
 			if(!UNIONPAY_CNNAME.equals(CertUtil.getIdentitiesFromCertficate(cert))) {
 				LogUtil.writeErrorLog("cer owner is not CUP:" + CertUtil.getIdentitiesFromCertficate(cert));

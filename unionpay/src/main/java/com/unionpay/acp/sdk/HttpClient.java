@@ -223,6 +223,7 @@ public class HttpClient {
 	 * @throws ProtocolException
 	 */
 	private HttpURLConnection createConnection(String encoding) throws ProtocolException {
+		SDKConfig config = SDKConfig.config;
 		HttpURLConnection httpURLConnection = null;
 		try {
 			httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -241,7 +242,7 @@ public class HttpClient {
 		if ("https".equalsIgnoreCase(url.getProtocol())) {
 			HttpsURLConnection husn = (HttpsURLConnection) httpURLConnection;
 			//是否验证https证书，测试环境请设置false，生产环境建议优先尝试true，不行再false
-			if(!SDKConfig.getConfig().isIfValidateRemoteCert()){
+			if(!config.isIfValidateRemoteCert()){
 				husn.setSSLSocketFactory(new BaseHttpSSLSocketFactory());
 				husn.setHostnameVerifier(new TrustAnyHostnameVerifier());//解决由于服务器证书问题导致HTTPS无法访问的情况
 			}
@@ -257,6 +258,7 @@ public class HttpClient {
 	 * @throws ProtocolException
 	 */
 	private HttpURLConnection createConnectionGet(String encoding) throws ProtocolException {
+		SDKConfig config = SDKConfig.config;
 		HttpURLConnection httpURLConnection = null;
 		try {
 			httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -273,7 +275,7 @@ public class HttpClient {
 		if ("https".equalsIgnoreCase(url.getProtocol())) {
 			HttpsURLConnection husn = (HttpsURLConnection) httpURLConnection;
 			//是否验证https证书，测试环境请设置false，生产环境建议优先尝试true，不行再false
-			if(!SDKConfig.getConfig().isIfValidateRemoteCert()){
+			if(!config.isIfValidateRemoteCert()){
 				husn.setSSLSocketFactory(new BaseHttpSSLSocketFactory());
 				husn.setHostnameVerifier(new TrustAnyHostnameVerifier());//解决由于服务器证书问题导致HTTPS无法访问的情况
 			}

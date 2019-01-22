@@ -46,13 +46,13 @@ public class Form_6_6_FileTransfer extends HttpServlet {
 		 * 如果是在web应用开发里,这个方法可使用监听的方式写入缓存,无须在这出现
 		 */
 		//这里已经将加载属性文件的方法挪到了web/AutoLoadServlet.java中
-		//SDKConfig.getConfig().loadPropertiesFromSrc(); //从classpath加载acp_sdk.properties文件
+		//config.loadPropertiesFromSrc(); //从classpath加载acp_sdk.properties文件
 		super.init();
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		SDKConfig config = SDKConfig.getConfig();
+		SDKConfig config = SDKConfig.config;
 
 		String merId = req.getParameter("merId");
 		String settleDate = req.getParameter("settleDate");
@@ -61,8 +61,8 @@ public class Form_6_6_FileTransfer extends HttpServlet {
 		
 		/***银联全渠道系统，产品参数，除了encoding自行选择外其他不需修改***/
 		data.put("version", config.getVersion());               //版本号 全渠道默认值
-		data.put("encoding", SDKConfig.encoding);             //字符集编码 可以使用UTF-8,GBK两种方式
-		data.put("signMethod", SDKConfig.getConfig().getSignMethod()); //签名方法
+		data.put("encoding", config.getEncoding());             //字符集编码 可以使用UTF-8,GBK两种方式
+		data.put("signMethod", config.getSignMethod()); //签名方法
 		data.put("txnType", "76");                           //交易类型 76-对账文件下载
 		data.put("txnSubType", "01");                        //交易子类型 01-对账文件下载
 		data.put("bizType", "000000");                       //业务类型，固定
@@ -76,21 +76,21 @@ public class Form_6_6_FileTransfer extends HttpServlet {
 		
 		/**请求参数设置完毕，以下对请求参数进行签名并发送http post请求，接收同步应答报文------------->**/
 		
-		Map<String, String> reqData = AcpService.sign(data,SDKConfig.encoding);//报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
-		String url = SDKConfig.getConfig().getFileTransUrl();//获取请求银联的前台地址：对应属性文件acp_sdk.properties文件中的acpsdk.fileTransUrl
-		Map<String, String> rspData =  AcpService.post(reqData,url,SDKConfig.encoding);
+		Map<String, String> reqData = AcpService.sign(data, config.getEncoding());//报文中certId,signature的值是在signData方法中获取并自动赋值的，只要证书配置正确即可。
+		String url = config.getFileTransUrl();//获取请求银联的前台地址：对应属性文件acp_sdk.properties文件中的acpsdk.fileTransUrl
+		Map<String, String> rspData =  AcpService.post(reqData, url, config.getEncoding());
 
 		/**对应答码的处理，请根据您的业务逻辑来编写程序,以下应答码处理逻辑仅供参考------------->**/
 		//应答码规范参考open.unionpay.com帮助中心 下载  产品接口规范  《平台接入接口规范-第5部分-附录》
 		String fileContentDispaly = "";
 		if(!rspData.isEmpty()){
-			if(AcpService.validate(rspData, SDKConfig.encoding)){
+			if(AcpService.validate(rspData, config.getEncoding())){
 				LogUtil.writeLog("验证签名成功");
 				String respCode = rspData.get("respCode");
 				if("00".equals(respCode)){
 					String outPutDirectory ="d:\\";
 					// 交易成功，解析返回报文中的fileContent并落地
-					String zipFilePath = AcpService.deCodeFileContent(rspData,outPutDirectory,SDKConfig.encoding);
+					String zipFilePath = AcpService.deCodeFileContent(rspData, outPutDirectory, config.getEncoding());
 					//对落地的zip文件解压缩并解析
 					List<String> fileList = DemoBase.unzip(zipFilePath, outPutDirectory);
 					//解析ZM，ZME文件

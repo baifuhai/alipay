@@ -67,7 +67,8 @@ public class SDKUtil {
 	 * @return 签名是否成功
 	 */
 	public static boolean sign(Map<String, String> data, String encoding) {
-		
+		SDKConfig config = SDKConfig.config;
+
 		if (isEmpty(encoding)) {
 			encoding = "UTF-8";
 		}
@@ -131,11 +132,9 @@ public class SDKUtil {
 				}
 			}
 		} else if (SIGNMETHOD_SHA256.equals(signMethod)) {
-			return signBySecureKey(data, SDKConfig.getConfig()
-					.getSecureKey(), encoding);
+			return signBySecureKey(data, config.getSecureKey(), encoding);
 		} else if (SIGNMETHOD_SM3.equals(signMethod)) {
-			return signBySecureKey(data, SDKConfig.getConfig()
-					.getSecureKey(), encoding);
+			return signBySecureKey(data, config.getSecureKey(), encoding);
 		}
 		return false;
 	}
@@ -153,8 +152,7 @@ public class SDKUtil {
 	 *            证书密码
 	 * @return 签名值
 	 */
-	public static boolean signBySecureKey(Map<String, String> data, String secureKey,
-			String encoding) {
+	public static boolean signBySecureKey(Map<String, String> data, String secureKey, String encoding) {
 		
 		if (isEmpty(encoding)) {
 			encoding = "UTF-8";
@@ -335,6 +333,8 @@ public class SDKUtil {
 	 * @return
 	 */
 	public static boolean validate(Map<String, String> resData, String encoding) {
+		SDKConfig config = SDKConfig.config;
+
 		LogUtil.writeLog("验签处理开始");
 		if (isEmpty(encoding)) {
 			encoding = "UTF-8";
@@ -408,8 +408,7 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sha256X16Str(SDKConfig.getConfig()
-							.getSecureKey(), encoding);
+					+ SecureUtil.sha256X16Str(config.getSecureKey(), encoding);
 			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256,
 					encoding);
 			boolean result =  stringSign.equals(strAfterSha256);
@@ -424,8 +423,7 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSM3 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sm3X16Str(SDKConfig.getConfig()
-							.getSecureKey(), encoding);
+					+ SecureUtil.sm3X16Str(config.getSecureKey(), encoding);
 			String strAfterSM3 = SecureUtil
 					.sm3X16Str(strBeforeSM3, encoding);
 			boolean result =  stringSign.equals(strAfterSM3);
@@ -580,8 +578,9 @@ public class SDKUtil {
 	 * @param encoding
 	 * @return
 	 */
-	public static int getEncryptCert(Map<String, String> resData,
-			String encoding) {
+	public static int getEncryptCert(Map<String, String> resData, String encoding) {
+		SDKConfig config = SDKConfig.config;
+
 		String strCert = resData.get(SDKConstants.param_encryptPubKeyCert);
 		String certType = resData.get(SDKConstants.param_certType);
 		if (isEmpty(strCert) || isEmpty(certType))
@@ -592,7 +591,7 @@ public class SDKUtil {
 			if (!CertUtil.getEncryptCertId().equals(
 					x509Cert.getSerialNumber().toString())) {
 				// ID不同时进行本地证书更新操作
-				String localCertPath = SDKConfig.getConfig().getEncryptCertPath();
+				String localCertPath = config.getEncryptCertPath();
 				String newLocalCertPath = genBackupName(localCertPath);
 				// 1.将本地证书进行备份存储
 				if (!copyFile(localCertPath, newLocalCertPath))
@@ -612,7 +611,7 @@ public class SDKUtil {
 //			if (!CertUtil.getEncryptTrackCertId().equals(
 //					x509Cert.getSerialNumber().toString())) {
 //				// ID不同时进行本地证书更新操作
-//				String localCertPath = SDKConfig.getConfig().getEncryptTrackCertPath();
+//				String localCertPath = config.getEncryptTrackCertPath();
 //				String newLocalCertPath = genBackupName(localCertPath);
 //				// 1.将本地证书进行备份存储
 //				if (!copyFile(localCertPath, newLocalCertPath))
