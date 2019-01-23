@@ -66,7 +66,7 @@ public class SDKUtil {
 	 *            编码
 	 * @return 签名是否成功
 	 */
-	public static boolean sign(Map<String, String> data, String encoding) {
+	public static boolean sign(Map<String, String> data, String encoding) throws Exception {
 		SDKConfig config = SDKConfig.config;
 
 		if (isEmpty(encoding)) {
@@ -152,7 +152,7 @@ public class SDKUtil {
 	 *            证书密码
 	 * @return 签名值
 	 */
-	public static boolean signBySecureKey(Map<String, String> data, String secureKey, String encoding) {
+	public static boolean signBySecureKey(Map<String, String> data, String secureKey, String encoding) throws Exception {
 		
 		if (isEmpty(encoding)) {
 			encoding = "UTF-8";
@@ -174,8 +174,7 @@ public class SDKUtil {
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
 					+ SecureUtil.sha256X16Str(secureKey, encoding);
-			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256,
-					encoding);
+			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256, encoding);
 			// 设置签名域值
 			data.put(SDKConstants.param_signature, strAfterSha256);
 			return true;
@@ -287,7 +286,7 @@ public class SDKUtil {
 	 *            编码格式
 	 * @return
 	 */
-	public static boolean validateBySecureKey(Map<String, String> resData, String secureKey, String encoding) {
+	public static boolean validateBySecureKey(Map<String, String> resData, String secureKey, String encoding) throws Exception {
 		LogUtil.writeLog("验签处理开始");
 		if (isEmpty(encoding)) {
 			encoding = "UTF-8";
@@ -332,7 +331,7 @@ public class SDKUtil {
 	 *            编码格式
 	 * @return
 	 */
-	public static boolean validate(Map<String, String> resData, String encoding) {
+	public static boolean validate(Map<String, String> resData, String encoding) throws Exception {
 		SDKConfig config = SDKConfig.config;
 
 		LogUtil.writeLog("验签处理开始");
@@ -409,8 +408,7 @@ public class SDKUtil {
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
 					+ SecureUtil.sha256X16Str(config.getSecureKey(), encoding);
-			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256,
-					encoding);
+			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256, encoding);
 			boolean result =  stringSign.equals(strAfterSha256);
 			LogUtil.writeLog("验证签名" + (result? "成功":"失败"));
 			return result;

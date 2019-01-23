@@ -10,10 +10,6 @@ import org.bouncycastle.crypto.digests.SM3Digest;
 
 /**
  * 报文加密解密等操作的工具类
- *
- * @ClassName SecureUtil
- * @Description acpsdk安全算法工具类
- * @date 2016-7-22 下午4:08:32
  */
 public class SecureUtil {
 
@@ -25,7 +21,7 @@ public class SecureUtil {
 
 	private static final String BC_PROV_ALGORITHM_SHA256RSA = "SHA256withRSA";
 
-	private static final String ALGORITHM_MODE_PADDING = "AES/ECB/PKCS1Padding";
+	private static final String ALGORITHM_MODE_PADDING = "RSA/ECB/PKCS1Padding";
 
 	/**
 	 * sm3计算后进行16进制转换
@@ -34,8 +30,8 @@ public class SecureUtil {
 	 * @param encoding 编码
 	 * @return
 	 */
-	public static String sm3X16Str(String data, String encoding) {
-		byte[] bytes = sm3(data, encoding);
+	public static String sm3X16Str(String data, String encoding) throws Exception {
+		byte[] bytes = sm3(data.getBytes(encoding));
 		StringBuilder sm3StrBuff = new StringBuilder();
 		for (int i = 0; i < bytes.length; i++) {
 			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
@@ -54,8 +50,8 @@ public class SecureUtil {
 	 * @param encoding 编码
 	 * @return
 	 */
-	public static byte[] sha1X16(String data, String encoding) {
-		byte[] bytes = sha1(data, encoding);
+	public static byte[] sha1X16(String data, String encoding) throws Exception {
+		byte[] bytes = sha1(data.getBytes(encoding));
 		StringBuilder sha1StrBuff = new StringBuilder();
 		for (int i = 0; i < bytes.length; i++) {
 			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
@@ -79,8 +75,8 @@ public class SecureUtil {
 	 * @param encoding 编码
 	 * @return
 	 */
-	public static String sha256X16Str(String data, String encoding) {
-		byte[] bytes = sha256(data, encoding);
+	public static String sha256X16Str(String data, String encoding) throws Exception {
+		byte[] bytes = sha256(data.getBytes(encoding));
 		StringBuilder sha256StrBuff = new StringBuilder();
 		for (int i = 0; i < bytes.length; i++) {
 			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
@@ -101,7 +97,7 @@ public class SecureUtil {
 	 * @throws Exception
 	 */
 	public static byte[] sha256X16(String data, String encoding) throws Exception {
-		byte[] bytes = sha256(data, encoding);
+		byte[] bytes = sha256(data.getBytes(encoding));
 		StringBuilder sha256StrBuff = new StringBuilder();
 		for (int i = 0; i < bytes.length; i++) {
 			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
@@ -142,7 +138,7 @@ public class SecureUtil {
 	}
 
 	/**
-	 * SM3计算
+	 * sm3计算
 	 *
 	 * @param data 待计算的数据
 	 * @return
@@ -155,58 +151,6 @@ public class SecureUtil {
 		return result;
 	}
 	
-	/**
-	 * sha1计算
-	 * 
-	 * @param datas 待计算的数据
-	 * @param encoding 字符集编码
-	 * @return
-	 */
-//	private static byte[] sha1(String datas, String encoding) {
-//		try {
-//			return sha1(datas.getBytes(encoding));
-//		} catch (UnsupportedEncodingException e) {
-//			LogUtil.writeErrorLog("SHA1计算失败", e);
-//			return null;
-//		}
-//	}
-	
-	/**
-	 * sha256计算
-	 * 
-	 * @param datas
-	 *            待计算的数据
-	 * @param encoding
-	 *            字符集编码
-	 * @return
-	 */
-//	private static byte[] sha256(String datas, String encoding) {
-//		try {
-//			return sha256(datas.getBytes(encoding));
-//		} catch (UnsupportedEncodingException e) {
-//			LogUtil.writeErrorLog("SHA256计算失败", e);
-//			return null;
-//		}
-//	}
-
-	/**
-	 * sm3计算
-	 * 
-	 * @param datas
-	 *            待计算的数据
-	 * @param encoding
-	 *            字符集编码
-	 * @return
-	 */
-//	private static byte[] sm3(String datas, String encoding) {
-//		try {
-//			return sm3(datas.getBytes(encoding));
-//		} catch (UnsupportedEncodingException e) {
-//			LogUtil.writeErrorLog("SM3计算失败", e);
-//			return null;
-//		}
-//	}
-
 	public static byte[] signBySoft(PrivateKey privateKey, byte[] data) throws Exception {
 		Signature st = Signature.getInstance(BC_PROV_ALGORITHM_SHA1RSA, "BC");
 		st.initSign(privateKey);
@@ -236,7 +180,22 @@ public class SecureUtil {
 	}
 
 	/**
-	 * 对数据通过公钥进行加密，并进行base64计算
+	 * 公钥加密，base64编码
+	 *
+	 * @param accNo 待处理数据
+	 * @param encoding 字符编码
+	 * @param key 公钥
+	 * @return
+	 * @throws Exception
+	 */
+	public static String encryptPin(String accNo, String pin, String encoding, PublicKey key) throws Exception {
+		byte[] data = pin2PinBlockWithCardNO(pin, accNo);
+		data = encryptData(key, data);
+		return new String(SecureUtil.base64Encode(data), encoding);
+	}
+
+	/**
+	 * 公钥加密，base64编码
 	 * 
 	 * @param dataString 待处理数据
 	 * @param encoding 字符编码
@@ -249,21 +208,6 @@ public class SecureUtil {
 		return new String(SecureUtil.base64Encode(data), encoding);
 	}
 
-	/**
-	 * 公钥加密，base64编码
-	 * 
-	 * @param accNo 待处理数据
-	 * @param encoding 字符编码
-	 * @param key 公钥
-	 * @return
-	 * @throws Exception
-	 */
-	public static String encryptPin(String accNo, String pin, String encoding, PublicKey key) throws Exception {
-		byte[] data = pin2PinBlockWithCardNO(pin, accNo);
-		data = encryptData(key, data);
-		return new String(SecureUtil.base64Encode(data), encoding);
-	}
-	
 	/**
 	 * base64解码，私钥解密
 	 * 
@@ -309,7 +253,7 @@ public class SecureUtil {
 	 * @throws Exception
 	 */
 	private static byte[] encryptData(PublicKey publicKey, byte[] data) throws Exception {
-		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding","BC");
+		Cipher cipher = Cipher.getInstance(ALGORITHM_MODE_PADDING,"BC");
 		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 		return cipher.doFinal(data);
 	}
@@ -323,16 +267,11 @@ public class SecureUtil {
 	 * @throws Exception
 	 */
 	private static byte[] decryptData(PrivateKey privateKey, byte[] data) throws Exception {
-		Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding","BC");
+		Cipher cipher = Cipher.getInstance(ALGORITHM_MODE_PADDING,"BC");
 		cipher.init(Cipher.DECRYPT_MODE, privateKey);
 		return cipher.doFinal(data);
 	}
 
-	/**
-	 * 
-	 * @param aPin
-	 * @return
-	 */
 	private static byte[] pin2PinBlock(String aPin) {
 		int tTemp = 1;
 		int tPinLen = aPin.length();
@@ -385,11 +324,6 @@ public class SecureUtil {
 		return tByte;
 	}
 
-	/**
-	 * 
-	 * @param aPan
-	 * @return
-	 */
 	private static byte[] formatPan(String aPan) {
 		int tPanLen = aPan.length();
 		byte[] tByte = new byte[8];
@@ -408,13 +342,7 @@ public class SecureUtil {
 		return tByte;
 	}
 
-	/**
-	 * 
-	 * @param aPin
-	 * @param aCardNO
-	 * @return
-	 */
-	private static byte[] pin2PinBlockWithCardNO(String aPin, String aCardNO) {
+	public static byte[] pin2PinBlockWithCardNO(String aPin, String aCardNO) {
 		byte[] tPinByte = pin2PinBlock(aPin);
 		if (aCardNO.length() == 11) {
 			aCardNO = "00" + aCardNO;

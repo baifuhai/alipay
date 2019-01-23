@@ -16,7 +16,7 @@ import com.unionpay.acp.sdk.SDKConfig;
  */
 public class EncryptCerUpdateQuery {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		SDKConfig config = SDKConfig.config;
 		
 		Map<String, String> contentData = new HashMap<>();

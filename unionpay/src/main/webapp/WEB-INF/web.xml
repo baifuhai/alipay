@@ -1,53 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
-         xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          id="WebApp_ID" version="2.5">
     <display-name>ACPSample_B2C</display-name>
 
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
-        <welcome-file>index.htm</welcome-file>
         <welcome-file>index.jsp</welcome-file>
-        <welcome-file>default.html</welcome-file>
-        <welcome-file>default.htm</welcome-file>
-        <welcome-file>default.jsp</welcome-file>
     </welcome-file-list>
-
-    <servlet>
-        <servlet-name>form_6_7_1_AuthDeal_Front</servlet-name>
-        <servlet-class>com.unionpay.acp.demo.preauth.Form_6_7_1_AuthDeal_Front</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>form_6_7_1_AuthDeal_Front</servlet-name>
-        <url-pattern>/form_6_7_1_AuthDeal_Front</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>form_6_7_2_AuthUndo</servlet-name>
-        <servlet-class>com.unionpay.acp.demo.preauth.Form_6_7_2_AuthUndo</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>form_6_7_2_AuthUndo</servlet-name>
-        <url-pattern>/form_6_7_2_AuthUndo</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>form_6_7_3_AuthFinish</servlet-name>
-        <servlet-class>com.unionpay.acp.demo.preauth.Form_6_7_3_AuthFinish</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>form_6_7_3_AuthFinish</servlet-name>
-        <url-pattern>/form_6_7_3_AuthFinish</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>form_6_7_4_AuthFinishUndo</servlet-name>
-        <servlet-class>com.unionpay.acp.demo.preauth.Form_6_7_4_AuthFinishUndo</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>form_6_7_4_AuthFinishUndo</servlet-name>
-        <url-pattern>/form_6_7_4_AuthFinishUndo</url-pattern>
-    </servlet-mapping>
 
 </web-app>

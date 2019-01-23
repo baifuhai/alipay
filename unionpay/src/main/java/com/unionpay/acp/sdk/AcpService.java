@@ -29,7 +29,7 @@ public class AcpService {
 	 * @param encoding 上送请求报文域encoding字段的值<br>
 	 * @return　签名后的map对象<br>
 	 */
-	public static Map<String, String> sign(Map<String, String> reqData, String encoding) {
+	public static Map<String, String> sign(Map<String, String> reqData, String encoding) throws Exception {
 		reqData = SDKUtil.filterBlank(reqData);
 		SDKUtil.sign(reqData, encoding);
 		return reqData;
@@ -74,7 +74,7 @@ public class AcpService {
 	 * @param encoding 上送请求报文域encoding字段的值<br>
 	 * @return　签名后的map对象<br>
 	 */
-	public static Map<String, String> signBySecureKey(Map<String, String> reqData, String secureKey, String encoding) {
+	public static Map<String, String> signBySecureKey(Map<String, String> reqData, String secureKey, String encoding) throws Exception {
 		reqData = SDKUtil.filterBlank(reqData);
 		SDKUtil.signBySecureKey(reqData, secureKey, encoding);
 		return reqData;
@@ -82,21 +82,21 @@ public class AcpService {
 	
 	/**
 	 * 验证签名(SHA-1摘要算法)<br>
-	 * @param resData 返回报文数据<br>
+	 * @param rspData 返回报文数据<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
 	 * @return true 通过 false 未通过<br>
 	 */
-	public static boolean validate(Map<String, String> rspData, String encoding) {
+	public static boolean validate(Map<String, String> rspData, String encoding) throws Exception {
 		return SDKUtil.validate(rspData, encoding);
 	}
 	
 	/**
 	 * 多密钥验签(通过传入密钥签名)<br>
-	 * @param resData 返回报文数据<br>
+	 * @param rspData 返回报文数据<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
 	 * @return true 通过 false 未通过<br>
 	 */
-	public static boolean validateBySecureKey(Map<String, String> rspData, String secureKey, String encoding) {
+	public static boolean validateBySecureKey(Map<String, String> rspData, String secureKey, String encoding) throws Exception {
 		return SDKUtil.validateBySecureKey(rspData, secureKey, encoding);
 	}
 	
@@ -145,9 +145,8 @@ public class AcpService {
 	/**
 	 * 功能：后台交易提交请求报文并接收同步应答报文<br>
 	 * @param reqData 请求报文<br>
-	 * @param rspData 应答报文<br>
 	 * @param reqUrl  请求地址<br>
-	 * @param encoding<br>
+	 * @param encoding
 	 * @return 应答http 200返回true ,其他false<br>
 	 */
 	public static Map<String,String> post(Map<String, String> reqData, String reqUrl, String encoding) {
@@ -359,8 +358,7 @@ public class AcpService {
 	 * @param encoding 上送请求报文域encoding字段的值<br>				  
 	 * @return base64后的持卡人信息域字段<br>
 	 */
-	public static String getCustomerInfo(Map<String,String> customerInfoMap,String accNo,String encoding) {
-		
+	public static String getCustomerInfo(Map<String,String> customerInfoMap,String accNo,String encoding) throws Exception {
 		if(customerInfoMap.isEmpty())
 			return "{}";
 		StringBuffer sf = new StringBuffer("{");
@@ -408,7 +406,7 @@ public class AcpService {
 	 * @param encoding 上送请求报文域encoding字段的值
 	 * @return base64后的持卡人信息域字段 <br>
 	 */
-	public static String getCustomerInfoWithEncrypt(Map<String,String> customerInfoMap,String accNo,String encoding) {
+	public static String getCustomerInfoWithEncrypt(Map<String,String> customerInfoMap,String accNo,String encoding) throws Exception {
 		if(customerInfoMap.isEmpty())
 			return "{}";
 		StringBuffer sf = new StringBuffer("{");
@@ -460,7 +458,7 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return
 	 */
-	public static Map<String,String> parseCustomerInfo(String customerInfo,String encoding){
+	public static Map<String,String> parseCustomerInfo(String customerInfo,String encoding) throws Exception {
 		Map<String,String> customerInfoMap = null;
 		try {
 				byte[] b = SecureUtil.base64Decode(customerInfo.getBytes(encoding));
@@ -491,8 +489,7 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return
 	 */
-	public static Map<String,String> parseCustomerInfo(String customerInfo, String certPath, 
-			String certPwd, String encoding){
+	public static Map<String,String> parseCustomerInfo(String customerInfo, String certPath, String certPwd, String encoding) throws Exception {
 		Map<String,String> customerInfoMap = null;
 		try {
 				byte[] b = SecureUtil.base64Decode(customerInfo.getBytes(encoding));
@@ -519,13 +516,12 @@ public class AcpService {
 	/**
 	 * 密码加密并做base64<br>
 	 * @param accNo 卡号<br>
-	 * @param pwd 密码<br>
+	 * @param pin 密码<br>
 	 * @param encoding<br>
 	 * @return 加密的内容<br>
 	 */
-	public static String encryptPin(String accNo, String pin, String encoding) {
-		return SecureUtil.encryptPin(accNo, pin, encoding, CertUtil
-				.getEncryptCertPublicKey());
+	public static String encryptPin(String accNo, String pin, String encoding) throws Exception {
+		return SecureUtil.encryptPin(accNo, pin, encoding, CertUtil.getEncryptCertPublicKey());
 	}
 	
 	/**
@@ -534,9 +530,8 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return 加密的密文<br>
 	 */
-	public static String encryptData(String data, String encoding) {
-		return SecureUtil.encryptData(data, encoding, CertUtil
-				.getEncryptCertPublicKey());
+	public static String encryptData(String data, String encoding) throws Exception {
+		return SecureUtil.encryptData(data, encoding, CertUtil.getEncryptCertPublicKey());
 	}
 	
 	/**
@@ -545,9 +540,8 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return 解密后的明文<br>
 	 */
-	public static String decryptData(String base64EncryptedInfo, String encoding) {
-		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil
-				.getSignCertPrivateKey());
+	public static String decryptData(String base64EncryptedInfo, String encoding) throws Exception {
+		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil.getSignCertPrivateKey());
 	}
 	
 	/**
@@ -558,10 +552,8 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return
 	 */
-	public static String decryptData(String base64EncryptedInfo, String certPath, 
-			String certPwd, String encoding) {
-		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil
-				.getSignCertPrivateKeyByStoreMap(certPath, certPwd));
+	public static String decryptData(String base64EncryptedInfo, String certPath, String certPwd, String encoding) throws Exception {
+		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd));
 	}
 
 	/**
@@ -571,9 +563,8 @@ public class AcpService {
 	 * @return 加密的密文<br>
 	 * @deprecated
 	 */
-	public static String encryptTrack(String trackData, String encoding) {
-		return SecureUtil.encryptData(trackData, encoding,
-				CertUtil.getEncryptTrackPublicKey());
+	public static String encryptTrack(String trackData, String encoding) throws Exception {
+		return SecureUtil.encryptData(trackData, encoding, CertUtil.getEncryptTrackPublicKey());
 	}
 	
 	/**
@@ -619,9 +610,7 @@ public class AcpService {
 	 * @param encoding 编码<br>
 	 * @return
 	 */
-	public static String getCardTransData(Map<String, String> cardTransDataMap, 
-			Map<String, String> requestData,
-			String encoding) { {
+	public static String getCardTransData(Map<String, String> cardTransDataMap, Map<String, String> requestData, String encoding) throws Exception {
 
 		StringBuffer cardTransDataBuffer = new StringBuffer();
 		
@@ -632,8 +621,7 @@ public class AcpService {
 					.append(SDKConstants.COLON).append(requestData.get("txnTime"))
 					.append(SDKConstants.COLON).append(requestData.get("txnAmt")==null?0:requestData.get("txnAmt"))
 					.append(SDKConstants.COLON).append(cardTransDataMap.get("track2Data"));
-			cardTransDataMap.put("track2Data", 
-					AcpService.encryptData(track2Buffer.toString(),	encoding));
+			cardTransDataMap.put("track2Data", AcpService.encryptData(track2Buffer.toString(),	encoding));
 		}
 		
 		if(cardTransDataMap.containsKey("track3Data")){
@@ -643,15 +631,12 @@ public class AcpService {
 				.append(SDKConstants.COLON).append(requestData.get("txnTime"))
 				.append(SDKConstants.COLON).append(requestData.get("txnAmt")==null?0:requestData.get("txnAmt"))
 				.append(SDKConstants.COLON).append(cardTransDataMap.get("track3Data"));
-			cardTransDataMap.put("track3Data", 
-					AcpService.encryptData(track3Buffer.toString(),	encoding));
+			cardTransDataMap.put("track3Data", AcpService.encryptData(track3Buffer.toString(),	encoding));
 		}
 
 		return cardTransDataBuffer.append(SDKConstants.LEFT_BRACE)
 				.append(SDKUtil.coverMap2String(cardTransDataMap))
 				.append(SDKConstants.RIGHT_BRACE).toString();
-		}
-	
 	}
 	
 	/**
