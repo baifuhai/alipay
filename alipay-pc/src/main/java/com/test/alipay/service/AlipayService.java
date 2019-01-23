@@ -259,8 +259,8 @@ public class AlipayService {
         Map<String, String> params = new HashMap<>();
         Map<String, String[]> requestParams = request.getParameterMap();
         for (Iterator<String> iter = requestParams.keySet().iterator(); iter.hasNext();) {
-            String key = (String) iter.next();
-            String[] values = (String[]) requestParams.get(key);
+            String key = iter.next();
+            String[] values = requestParams.get(key);
             String valueStr = "";
             for (int i = 0; i < values.length; i++) {
                 valueStr += (i == 0) ? values[i] : "," + values[i];

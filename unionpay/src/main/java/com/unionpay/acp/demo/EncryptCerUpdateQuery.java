@@ -9,17 +9,17 @@ import com.unionpay.acp.sdk.SDKConfig;
 
 /**
  * 
- * 银联加密公钥更新查询(只适用于使用RSA证书加密的方式<即signMethod=01>，其他signMethod=11，12密钥加密用不到此交易)
+ * 银联加密公钥更新查询
+ * (只适用于使用RSA证书加密的方式<即signMethod=01>，其他signMethod=11，12密钥加密用不到此交易)
  * 商户定期（1天1次）向银联全渠道系统发起获取加密公钥信息交易.
  * 本交易成功后会自动替换配置文件acp_sdk.properties文件中acpsdk.encryptCert.path指定的文件，可用不用手工替换
- * 声明：以下代码只是为了方便商户测试而提供的样例代码，商户可以根据自己需要，按照技术文档编写。该代码仅供参考，不提供编码，性能，规范性等方面的保障<br>
  */
 public class EncryptCerUpdateQuery {
 
 	public static void main(String[] args) {
 		SDKConfig config = SDKConfig.config;
 		
-		Map<String, String> contentData = new HashMap<String, String>();
+		Map<String, String> contentData = new HashMap<>();
 		contentData.put("version", config.getVersion());                  		     //版本号
 		contentData.put("encoding", config.getEncoding());            		 //字符集编码 可以使用UTF-8,GBK两种方式
 		contentData.put("signMethod", config.getSignMethod());    //签名方法  01:RSA证书方式  11：支持散列方式验证SHA-256 12：支持散列方式验证SM3
@@ -70,4 +70,5 @@ public class EncryptCerUpdateQuery {
 			LogUtil.writeErrorLog("未获取到返回报文或返回http状态码非200");
 		}
 	}
+
 }

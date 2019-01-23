@@ -8,6 +8,7 @@ import com.test.wxpay.util.MyUtil;
 import com.test.wxpay.util.ResponseBean;
 import com.test.wxpay.util.WebUtil;
 import com.wxpay.api.WXPayUtil;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,8 @@ public class WxpayController {
     public String notify(HttpServletRequest request, HttpServletResponse response) throws Exception {
         try {
             InputStream is = request.getInputStream();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            /*ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             byte[] buf = new byte[10 * 1024];
             int len = -1;
@@ -104,7 +106,9 @@ public class WxpayController {
             }
             baos.flush();
 
-            String xml = new String(baos.toByteArray(), "UTF-8");
+            String xml = new String(baos.toByteArray(), "UTF-8");*/
+
+            String xml = new String(IOUtils.toByteArray(is), "UTF-8");
 
             Map<String, String> map = WXPayUtil.xmlToMap(xml);
             if (!wxpay.isPayResultNotifySignatureValid(map)) {
@@ -383,7 +387,8 @@ public class WxpayController {
     public String refundNotify(HttpServletRequest request, HttpServletResponse response) throws Exception {
         try {
             InputStream is = request.getInputStream();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            /*ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             byte[] buf = new byte[10 * 1024];
             int len = -1;
@@ -392,7 +397,9 @@ public class WxpayController {
             }
             baos.flush();
 
-            String xml = new String(baos.toByteArray(), "UTF-8");
+            String xml = new String(baos.toByteArray(), "UTF-8");*/
+
+            String xml = new String(IOUtils.toByteArray(is), "UTF-8");
 
             Map<String, String> resp = WXPayUtil.xmlToMap(xml);
 

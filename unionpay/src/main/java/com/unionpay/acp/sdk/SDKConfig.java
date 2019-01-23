@@ -6,7 +6,7 @@ import org.springframework.context.annotation.PropertySource;
 
 @Data
 @ConfigurationProperties(prefix = "acpsdk")
-@PropertySource("classpath:acp_sdk.properties")
+@PropertySource(value = {"classpath:acp_sdk.properties"})
 public class SDKConfig {
 	private String merId = "700000000000001";
 

@@ -202,12 +202,12 @@ public class AcpService {
 	
 	/**
 	 * 功能：前台交易构造HTTP POST自动提交表单<br>
-	 * @param action 表单提交地址<br>
+	 * @param reqUrl 表单提交地址<br>
 	 * @param hiddens 以MAP形式存储的表单键值<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
 	 * @return 构造好的HTTP POST交易表单<br>
 	 */
-	public static String createAutoFormHtml(String reqUrl, Map<String, String> hiddens,String encoding) {
+	public static String createAutoFormHtml(String reqUrl, Map<String, String> hiddens, String encoding) {
 		StringBuffer sf = new StringBuffer();
 		sf.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset="+encoding+"\"/></head><body>");
 		sf.append("<form id = \"pay_form\" action=\"" + reqUrl
@@ -281,27 +281,29 @@ public class AcpService {
 	 * @param fileDirectory 落地的文件目录（绝对路径）
 	 * @param encoding 上送请求报文域encoding字段的值<br>	
 	 */
-	public static String deCodeFileContent(Map<String, String> resData,String fileDirectory,String encoding) {
+	public static String deCodeFileContent(Map<String, String> resData, String fileDirectory, String encoding) {
 		// 解析返回文件
 		String filePath = null;
 		String fileContent = resData.get(SDKConstants.param_fileContent);
 		if (null != fileContent && !"".equals(fileContent)) {
 			FileOutputStream out = null;
 			try {
-				byte[] fileArray = SDKUtil.inflater(SecureUtil
-						.base64Decode(fileContent.getBytes(encoding)));
+				byte[] fileArray = SDKUtil.inflater(SecureUtil.base64Decode(fileContent.getBytes(encoding)));
+
 				if (SDKUtil.isEmpty(resData.get("fileName"))) {
 					filePath = fileDirectory + File.separator + resData.get("merId")
-							+ "_" + resData.get("batchNo") + "_"
-							+ resData.get("txnTime") + ".txt";
+							+ "_" + resData.get("batchNo")
+							+ "_" + resData.get("txnTime") + ".txt";
 				} else {
 					filePath = fileDirectory + File.separator + resData.get("fileName");
 				}
+
 				File file = new File(filePath);
 				if (file.exists()) {
 					file.delete();
 				}
 				file.createNewFile();
+
 			    out = new FileOutputStream(file);
 				out.write(fileArray, 0, fileArray.length);
 				out.flush();
@@ -309,11 +311,13 @@ public class AcpService {
 				LogUtil.writeErrorLog(e.getMessage(), e);
 			} catch (IOException e) {
 				LogUtil.writeErrorLog(e.getMessage(), e);
-			}finally{
-				try {
-					out.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+			} finally {
+				if (out != null) {
+					try {
+						out.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
