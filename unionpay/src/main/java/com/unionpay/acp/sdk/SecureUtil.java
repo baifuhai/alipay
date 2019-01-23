@@ -1,12 +1,13 @@
 package com.unionpay.acp.sdk;
 
-import java.io.UnsupportedEncodingException;
-import java.security.*;
-
-import javax.crypto.Cipher;
-
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.crypto.digests.SM3Digest;
+
+import javax.crypto.Cipher;
+import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
 
 /**
  * 报文加密解密等操作的工具类
@@ -24,103 +25,20 @@ public class SecureUtil {
 	private static final String ALGORITHM_MODE_PADDING = "RSA/ECB/PKCS1Padding";
 
 	/**
-	 * sm3计算后进行16进制转换
-	 * 
-	 * @param data 待计算的数据
-	 * @param encoding 编码
-	 * @return
-	 */
-	public static String sm3X16Str(String data, String encoding) throws Exception {
-		byte[] bytes = sm3(data.getBytes(encoding));
-		StringBuilder sm3StrBuff = new StringBuilder();
-		for (int i = 0; i < bytes.length; i++) {
-			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
-				sm3StrBuff.append("0").append(Integer.toHexString(0xFF & bytes[i]));
-			} else {
-				sm3StrBuff.append(Integer.toHexString(0xFF & bytes[i]));
-			}
-		}
-		return sm3StrBuff.toString();
-	}
-
-	/**
-	 * sha1计算后进行16进制转换
-	 * 
-	 * @param data 待计算的数据
-	 * @param encoding 编码
-	 * @return
-	 */
-	public static byte[] sha1X16(String data, String encoding) throws Exception {
-		byte[] bytes = sha1(data.getBytes(encoding));
-		StringBuilder sha1StrBuff = new StringBuilder();
-		for (int i = 0; i < bytes.length; i++) {
-			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
-				sha1StrBuff.append("0").append(Integer.toHexString(0xFF & bytes[i]));
-			} else {
-				sha1StrBuff.append(Integer.toHexString(0xFF & bytes[i]));
-			}
-		}
-		try {
-			return sha1StrBuff.toString().getBytes(encoding);
-		} catch (UnsupportedEncodingException e) {
-			LogUtil.writeErrorLog(e.getMessage(), e);
-			return null;
-		}
-	}
-
-	/**
-	 * sha256计算后进行16进制转换
-	 * 
-	 * @param data 待计算的数据
-	 * @param encoding 编码
-	 * @return
-	 */
-	public static String sha256X16Str(String data, String encoding) throws Exception {
-		byte[] bytes = sha256(data.getBytes(encoding));
-		StringBuilder sha256StrBuff = new StringBuilder();
-		for (int i = 0; i < bytes.length; i++) {
-			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
-				sha256StrBuff.append("0").append(Integer.toHexString(0xFF & bytes[i]));
-			} else {
-				sha256StrBuff.append(Integer.toHexString(0xFF & bytes[i]));
-			}
-		}
-		return sha256StrBuff.toString();
-	}
-	
-	/**
-	 * sha256计算后进行16进制转换
-	 *
-	 * @param data 待计算的数据
-	 * @param encoding 编码
-	 * @return
-	 * @throws Exception
-	 */
-	public static byte[] sha256X16(String data, String encoding) throws Exception {
-		byte[] bytes = sha256(data.getBytes(encoding));
-		StringBuilder sha256StrBuff = new StringBuilder();
-		for (int i = 0; i < bytes.length; i++) {
-			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
-				sha256StrBuff.append("0").append(Integer.toHexString(0xFF & bytes[i]));
-			} else {
-				sha256StrBuff.append(Integer.toHexString(0xFF & bytes[i]));
-			}
-		}
-		return sha256StrBuff.toString().getBytes(encoding);
-	}
-
-	/**
 	 * sha1计算
 	 *
 	 * @param data 待计算的数据
 	 * @return
 	 * @throws Exception
 	 */
-	private static byte[] sha1(byte[] data) throws Exception {
+	public static byte[] sha1(byte[] data) throws Exception {
 		MessageDigest md = MessageDigest.getInstance(ALGORITHM_SHA1);
 		md.reset();
 		md.update(data);
 		return md.digest();
+	}
+	public static String sha1X16(byte[] data) throws Exception {
+		return byteToHex(sha1(data));
 	}
 
 	/**
@@ -136,6 +54,9 @@ public class SecureUtil {
 		md.update(data);
 		return md.digest();
 	}
+	public static String sha256X16(byte[] data) throws Exception {
+		return byteToHex(sha256(data));
+	}
 
 	/**
 	 * sm3计算
@@ -150,83 +71,66 @@ public class SecureUtil {
 		sm3.doFinal(result, 0);
 		return result;
 	}
-	
-	public static byte[] signBySoft(PrivateKey privateKey, byte[] data) throws Exception {
+	public static String sm3X16(byte[] data) {
+		return byteToHex(sm3(data));
+	}
+
+	public static byte[] signBySoft(PrivateKey key, byte[] data) throws Exception {
 		Signature st = Signature.getInstance(BC_PROV_ALGORITHM_SHA1RSA, "BC");
-		st.initSign(privateKey);
+		st.initSign(key);
 		st.update(data);
 		return st.sign();
 	}
 	
-	public static byte[] signBySoft256(PrivateKey privateKey, byte[] data) throws Exception {
+	public static byte[] signBySoft256(PrivateKey key, byte[] data) throws Exception {
 		Signature st = Signature.getInstance(BC_PROV_ALGORITHM_SHA256RSA, "BC");
-		st.initSign(privateKey);
+		st.initSign(key);
 		st.update(data);
 		return st.sign();
 	}
 
-	public static boolean validateSignBySoft(PublicKey publicKey, byte[] signData, byte[] srcData) throws Exception {
+	public static boolean validateSignBySoft(PublicKey key, byte[] signData, byte[] srcData) throws Exception {
 		Signature st = Signature.getInstance(BC_PROV_ALGORITHM_SHA1RSA, "BC");
-		st.initVerify(publicKey);
+		st.initVerify(key);
 		st.update(srcData);
 		return st.verify(signData);
 	}
 	
-	public static boolean validateSignBySoft256(PublicKey publicKey, byte[] signData, byte[] srcData) throws Exception {
+	public static boolean validateSignBySoft256(PublicKey key, byte[] signData, byte[] srcData) throws Exception {
 		Signature st = Signature.getInstance(BC_PROV_ALGORITHM_SHA256RSA, "BC");
-		st.initVerify(publicKey);
+		st.initVerify(key);
 		st.update(srcData);
 		return st.verify(signData);
-	}
-
-	/**
-	 * 公钥加密，base64编码
-	 *
-	 * @param accNo 待处理数据
-	 * @param encoding 字符编码
-	 * @param key 公钥
-	 * @return
-	 * @throws Exception
-	 */
-	public static String encryptPin(String accNo, String pin, String encoding, PublicKey key) throws Exception {
-		byte[] data = pin2PinBlockWithCardNO(pin, accNo);
-		data = encryptData(key, data);
-		return new String(SecureUtil.base64Encode(data), encoding);
 	}
 
 	/**
 	 * 公钥加密，base64编码
 	 * 
-	 * @param dataString 待处理数据
-	 * @param encoding 字符编码
+	 * @param data 待处理数据
 	 * @param key 公钥
 	 * @return
 	 * @throws Exception
 	 */
-	public static String encryptData(String dataString, String encoding, PublicKey key) throws Exception {
-		byte[] data = encryptData(key, dataString.getBytes(encoding));
-		return new String(SecureUtil.base64Encode(data), encoding);
+	public static byte[] encryptAndEncode(byte[] data, PublicKey key) throws Exception {
+		return base64Encode(encrypt(data, key));
 	}
 
 	/**
 	 * base64解码，私钥解密
 	 * 
-	 * @param dataString base64过的数据
-	 * @param encoding 编码
+	 * @param data 待处理数据
 	 * @param key 私钥
 	 * @return
 	 * @throws Exception
 	 */
-	public static String decryptData(String dataString, String encoding, PrivateKey key) throws Exception {
-		byte[] data = SecureUtil.base64Decode(dataString.getBytes(encoding));
-		data = decryptData(key, data);
-		return new String(data, encoding);
+	public static byte[] decodeAndDecrypt(byte[] data, PrivateKey key) throws Exception {
+		return decrypt(base64Decode(data), key);
 	}
 
 	/**
 	 * base64编码
 	 * 
-	 * @param data 待编码数据
+	 * @param data 待编码的数据
 	 * @return
 	 */
 	public static byte[] base64Encode(byte[] data) {
@@ -236,7 +140,7 @@ public class SecureUtil {
 	/**
 	 * base64解码
 	 *
-	 * @param data 待解码数据
+	 * @param data 待解码的数据
 	 * @return
 	 */
 	public static byte[] base64Decode(byte[] data) {
@@ -246,30 +150,48 @@ public class SecureUtil {
 	/**
 	 * 加密
 	 * 加密除pin之外的其他信息
-	 * 
-	 * @param publicKey
-	 * @param data
+	 *
+	 * @param data 待加密的数据
+	 * @param key 公钥
 	 * @return
 	 * @throws Exception
 	 */
-	private static byte[] encryptData(PublicKey publicKey, byte[] data) throws Exception {
+	public static byte[] encrypt(byte[] data, PublicKey key) throws Exception {
 		Cipher cipher = Cipher.getInstance(ALGORITHM_MODE_PADDING,"BC");
-		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+		cipher.init(Cipher.ENCRYPT_MODE, key);
 		return cipher.doFinal(data);
 	}
 
 	/**
 	 * 解密
 	 *
-	 * @param privateKey
-	 * @param data
+	 * @param data 待解密的数据
+	 * @param key 私钥
 	 * @return
 	 * @throws Exception
 	 */
-	private static byte[] decryptData(PrivateKey privateKey, byte[] data) throws Exception {
+	public static byte[] decrypt(byte[] data, PrivateKey key) throws Exception {
 		Cipher cipher = Cipher.getInstance(ALGORITHM_MODE_PADDING,"BC");
-		cipher.init(Cipher.DECRYPT_MODE, privateKey);
+		cipher.init(Cipher.DECRYPT_MODE, key);
 		return cipher.doFinal(data);
+	}
+
+	/**
+	 * 字节转16进制
+	 *
+	 * @param bytes
+	 * @return
+	 */
+	public static String byteToHex(byte[] bytes) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < bytes.length; i++) {
+			if (Integer.toHexString(0xFF & bytes[i]).length() == 1) {
+				sb.append("0").append(Integer.toHexString(0xFF & bytes[i]));
+			} else {
+				sb.append(Integer.toHexString(0xFF & bytes[i]));
+			}
+		}
+		return sb.toString();
 	}
 
 	private static byte[] pin2PinBlock(String aPin) {

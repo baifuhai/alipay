@@ -1,19 +1,6 @@
-/**
- *
- * Licensed Property to China UnionPay Co., Ltd.
- * 
- * (C) Copyright of China UnionPay Co., Ltd. 2010
- *     All Rights Reserved.
- *
- * 
- * Modification History:
- * =============================================================================
- *   Author         Date          Description
- *   ------------ ---------- ---------------------------------------------------
- *   xshu       2014-05-28       证书工具类.
- * =============================================================================
- */
 package com.unionpay.acp.sdk;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -53,27 +40,33 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.unionpay.acp.sdk.SDKConstants.UNIONPAY_CNNAME;
 import static com.unionpay.acp.sdk.SDKUtil.isEmpty;
+
 /**
- * @ClassName: CertUtil
- * @Description: acpsdk证书工具类，主要用于对证书的加载和使用
- * @date 2016-7-22 下午2:46:20
- * 声明：以下代码只是为了方便接入方测试而提供的样例代码，商户可以根据自己需要，按照技术文档编写。该代码仅供参考，不提供编码，性能，规范性等方面的保障
+ * 证书工具类，主要用于对证书的加载和使用
  */
 public class CertUtil {
+
 	/** 证书容器，存储对商户请求报文签名私钥证书. */
 	private static KeyStore keyStore = null;
+
 	/** 敏感信息加密公钥证书 */
 	private static X509Certificate encryptCert = null;
+
 	/** 磁道加密公钥 */
 	private static PublicKey encryptTrackKey = null;
+
 	/** 验证银联返回报文签名证书. */
 	private static X509Certificate validateCert = null;
+
 	/** 验签中级证书 */
 	private static X509Certificate middleCert = null;
+
 	/** 验签根证书 */
 	private static X509Certificate rootCert = null;
+
 	/** 验证银联返回报文签名的公钥证书存储Map. */
 	private static Map<String, X509Certificate> certMap = new HashMap<String, X509Certificate>();
+
 	/** 商户私钥存储Map */
 	private final static Map<String, KeyStore> keyStoreMap = new ConcurrentHashMap<String, KeyStore>();
 	
@@ -104,11 +97,11 @@ public class CertUtil {
 	private static void addProvider(){
 		if (Security.getProvider("BC") == null) {
 			LogUtil.writeLog("add BC provider");
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+			Security.addProvider(new BouncyCastleProvider());
 		} else {
-			Security.removeProvider("BC"); //解决eclipse调试时tomcat自动重新加载时，BC存在不明原因异常的问题。
-			Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 			LogUtil.writeLog("re-add BC provider");
+			Security.removeProvider("BC");//解决eclipse调试时tomcat自动重新加载时，BC存在不明原因异常的问题
+			Security.addProvider(new BouncyCastleProvider());
 		}
 		printSysInfo();
 	}
@@ -118,35 +111,35 @@ public class CertUtil {
 	 */
 	private static void initSignCert() {
 		SDKConfig config = SDKConfig.config;
-		if(!"01".equals(config.getSignMethod())){
+
+		if (!"01".equals(config.getSignMethod())) {
 			LogUtil.writeLog("非rsa签名方式，不加载签名证书。");
 			return;
 		}
-		if (config.getSignCertPath() == null
-				|| config.getSignCertPwd() == null
-				|| config.getSignCertType() == null) {
-			LogUtil.writeErrorLog("WARN: SIGNCERT_PATH 或 SIGNCERT_PWD 或 SIGNCERT_TYPE 为空。 停止加载签名证书。");
+
+		if (config.getSignCertPath() == null || config.getSignCertPwd() == null || config.getSignCertType() == null) {
+			LogUtil.writeErrorLog("WARN: SIGNCERT_PATH 或 SIGNCERT_PWD 或 SIGNCERT_TYPE 为空。停止加载签名证书。");
 			return;
 		}
-		if (null != keyStore) {
+
+		if (keyStore != null) {
 			keyStore = null;
 		}
+
 		try {
-			keyStore = getKeyInfo(config.getSignCertPath(),
-					config.getSignCertPwd(), config.getSignCertType());
-			LogUtil.writeLog("InitSignCert Successful. CertId=["
-					+ getSignCertId() + "]");
+			keyStore = getKeyInfo(config.getSignCertPath(), config.getSignCertPwd(), config.getSignCertType());
+			LogUtil.writeLog("InitSignCert Successful. CertId=[" + getSignCertId() + "]");
 		} catch (IOException e) {
 			LogUtil.writeErrorLog("InitSignCert Error", e);
 		}
 	}
 
 	/**
-	 * 用配置文件acp_sdk.properties配置路径 加载敏感信息加密证书
+	 * 加载银联公钥上级证书（中级证书）
 	 */
 	private static void initMiddleCert() {
 		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载中级证书==>"+config.getMiddleCertPath());
+		LogUtil.writeLog("加载中级证书==>" + config.getMiddleCertPath());
 		if (!isEmpty(config.getMiddleCertPath())) {
 			middleCert = initCert(config.getMiddleCertPath());
 			LogUtil.writeLog("Load MiddleCert Successful");
@@ -156,11 +149,11 @@ public class CertUtil {
 	}
 
 	/**
-	 * 用配置文件acp_sdk.properties配置路径 加载敏感信息加密证书
+	 * 加载银联公钥上级证书（根证书）
 	 */
 	private static void initRootCert() {
 		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载根证书==>"+config.getRootCertPath());
+		LogUtil.writeLog("加载根证书==>" + config.getRootCertPath());
 		if (!isEmpty(config.getRootCertPath())) {
 			rootCert = initCert(config.getRootCertPath());
 			LogUtil.writeLog("Load RootCert Successful");
@@ -168,13 +161,13 @@ public class CertUtil {
 			LogUtil.writeLog("WARN: acpsdk.rootCert.path is empty");
 		}
 	}
-	
+
 	/**
-	 * 用配置文件acp_sdk.properties配置路径 加载银联公钥上级证书（中级证书）
+	 * 加载敏感信息加密证书
 	 */
 	private static void initEncryptCert() {
 		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载敏感信息加密证书==>"+config.getEncryptCertPath());
+		LogUtil.writeLog("加载敏感信息加密证书==>" + config.getEncryptCertPath());
 		if (!isEmpty(config.getEncryptCertPath())) {
 			encryptCert = initCert(config.getEncryptCertPath());
 			LogUtil.writeLog("Load EncryptCert Successful");
@@ -184,14 +177,12 @@ public class CertUtil {
 	}
 	
 	/**
-	 * 用配置文件acp_sdk.properties配置路径 加载磁道公钥
+	 * 加载磁道公钥
 	 */
 	private static void initTrackKey() {
 		SDKConfig config = SDKConfig.config;
-		if (!isEmpty(config.getEncryptTrackKeyModulus())
-				&& !isEmpty(config.getEncryptTrackKeyExponent())) {
-			encryptTrackKey = getPublicKey(config.getEncryptTrackKeyModulus(),
-					config.getEncryptTrackKeyExponent());
+		if (!isEmpty(config.getEncryptTrackKeyModulus()) && !isEmpty(config.getEncryptTrackKeyExponent())) {
+			encryptTrackKey = getPublicKey(config.getEncryptTrackKeyModulus(), config.getEncryptTrackKeyExponent());
 			LogUtil.writeLog("LoadEncryptTrackKey Successful");
 		} else {
 			LogUtil.writeLog("WARN: acpsdk.encryptTrackKey.modulus or acpsdk.encryptTrackKey.exponent is empty");
@@ -199,7 +190,7 @@ public class CertUtil {
 	}
 
 	/**
-	 * 用配置文件acp_sdk.properties配置路径 加载验证签名证书
+	 * 加载验证签名证书
 	 */
 	private static void initValidateCertFromDir() {
 		SDKConfig config = SDKConfig.config;
@@ -207,6 +198,7 @@ public class CertUtil {
 			LogUtil.writeLog("非rsa签名方式，不加载验签证书。");
 			return;
 		}
+
 		certMap.clear();
 		String dir = config.getValidateCertDir();
 		LogUtil.writeLog("加载验证签名证书目录==>" + dir +" 注：如果请求报文中version=5.1.0那么此验签证书目录使用不到，可以不需要设置（version=5.0.0必须设置）。");
@@ -335,13 +327,13 @@ public class CertUtil {
 			return null;
 		}
 	}
+
 	/**
 	 * 通过指定路径的私钥证书  获取PrivateKey对象
 	 * 
 	 * @return
 	 */
-	public static PrivateKey getSignCertPrivateKeyByStoreMap(String certPath,
-			String certPwd) {
+	public static PrivateKey getSignCertPrivateKeyByStoreMap(String certPath, String certPwd) {
 		if (!keyStoreMap.containsKey(certPath)) {
 			loadSignCert(certPath, certPwd);
 		}

@@ -17,6 +17,8 @@ package com.unionpay.acp.sdk;
 
 import org.apache.commons.lang.StringUtils;
 
+import javax.xml.stream.events.EndDocument;
+
 import static com.unionpay.acp.sdk.SDKConstants.CERTTYPE_01;
 import static com.unionpay.acp.sdk.SDKConstants.CERTTYPE_02;
 import static com.unionpay.acp.sdk.SDKConstants.POINT;
@@ -94,8 +96,7 @@ public class SDKUtil {
 				String stringSign = null;
 				try {
 					// 通过SHA1进行摘要并转16进制
-					byte[] signDigest = SecureUtil
-							.sha1X16(stringData, encoding);
+					byte[] signDigest = SecureUtil.sha1X16(stringData.getBytes(encoding)).getBytes(encoding);
 					LogUtil.writeLog("打印摘要（交易返回11验证签名失败可以用来同正确的进行比对）:[" + new String(signDigest)+ "]");
 					byteSign = SecureUtil.base64Encode(SecureUtil.signBySoft(
 							CertUtil.getSignCertPrivateKey(), signDigest));
@@ -117,8 +118,7 @@ public class SDKUtil {
 				String stringSign = null;
 				try {
 					// 通过SHA256进行摘要并转16进制
-					byte[] signDigest = SecureUtil
-							.sha256X16(stringData, encoding);
+					byte[] signDigest = SecureUtil.sha256X16(stringData.getBytes(encoding)).getBytes(encoding);
 					LogUtil.writeLog("打印摘要（交易返回11验证签名失败可以用来同正确的进行比对）:[" + new String(signDigest)+ "]");
 					byteSign = SecureUtil.base64Encode(SecureUtil.signBySoft256(
 							CertUtil.getSignCertPrivateKey(), signDigest));
@@ -173,8 +173,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待签名请求报文串:[" + stringData + "]");
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sha256X16Str(secureKey, encoding);
-			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256, encoding);
+					+ SecureUtil.sha256X16(secureKey.getBytes(encoding));
+			String strAfterSha256 = SecureUtil.sha256X16(strBeforeSha256.getBytes(encoding));
 			// 设置签名域值
 			data.put(SDKConstants.param_signature, strAfterSha256);
 			return true;
@@ -183,8 +183,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待签名请求报文串:[" + stringData + "]");
 			String strBeforeSM3 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sm3X16Str(secureKey, encoding);
-			String strAfterSM3 = SecureUtil.sm3X16Str(strBeforeSM3, encoding);
+					+ SecureUtil.sm3X16(secureKey.getBytes(encoding));
+			String strAfterSM3 = SecureUtil.sm3X16(strBeforeSM3.getBytes(encoding));
 			// 设置签名域值
 			data.put(SDKConstants.param_signature, strAfterSM3);
 			return true;
@@ -237,8 +237,7 @@ public class SDKUtil {
 				String stringSign = null;
 				try {
 					// 通过SHA1进行摘要并转16进制
-					byte[] signDigest = SecureUtil
-							.sha1X16(stringData, encoding);
+					byte[] signDigest = SecureUtil.sha1X16(stringData.getBytes(encoding)).getBytes(encoding);
 					byteSign = SecureUtil.base64Encode(SecureUtil.signBySoft(
 							CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd), signDigest));
 					stringSign = new String(byteSign);
@@ -259,8 +258,7 @@ public class SDKUtil {
 				String stringSign = null;
 				try {
 					// 通过SHA256进行摘要并转16进制
-					byte[] signDigest = SecureUtil
-							.sha256X16(stringData, encoding);
+					byte[] signDigest = SecureUtil.sha256X16(stringData.getBytes(encoding)).getBytes(encoding);
 					byteSign = SecureUtil.base64Encode(SecureUtil.signBySoft256(
 							CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd), signDigest));
 					stringSign = new String(byteSign);
@@ -301,9 +299,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sha256X16Str(secureKey, encoding);
-			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256,
-					encoding);
+					+ SecureUtil.sha256X16(secureKey.getBytes(encoding)).getBytes(encoding);
+			String strAfterSha256 = SecureUtil.sha256X16(strBeforeSha256.getBytes(encoding));
 			return stringSign.equals(strAfterSha256);
 		} else if (SIGNMETHOD_SM3.equals(signMethod)) {
 			// 1.进行SM3验证
@@ -314,9 +311,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSM3 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sm3X16Str(secureKey, encoding);
-			String strAfterSM3 = SecureUtil
-					.sm3X16Str(strBeforeSM3, encoding);
+					+ SecureUtil.sm3X16(secureKey.getBytes(encoding));
+			String strAfterSM3 = SecureUtil.sm3X16(strBeforeSM3.getBytes(encoding));
 			return stringSign.equals(strAfterSM3);
 		}
 		return false;
@@ -353,10 +349,7 @@ public class SDKUtil {
 				LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 				try {
 					// 验证签名需要用银联发给商户的公钥证书.
-					return SecureUtil.validateSignBySoft(CertUtil
-							.getValidatePublicKey(certId), SecureUtil
-							.base64Decode(stringSign.getBytes(encoding)),
-							SecureUtil.sha1X16(stringData, encoding));
+					return SecureUtil.validateSignBySoft(CertUtil.getValidatePublicKey(certId), SecureUtil.base64Decode(stringSign.getBytes(encoding)), SecureUtil.sha1X16(stringData.getBytes(encoding)).getBytes(encoding));
 				} catch (UnsupportedEncodingException e) {
 					LogUtil.writeErrorLog(e.getMessage(), e);
 				} catch (Exception e) {
@@ -385,10 +378,7 @@ public class SDKUtil {
 				LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 				try {
 					// 验证签名需要用银联发给商户的公钥证书.
-					boolean result = SecureUtil.validateSignBySoft256(x509Cert
-							.getPublicKey(), SecureUtil.base64Decode(stringSign
-							.getBytes(encoding)), SecureUtil.sha256X16(
-							stringData, encoding));
+					boolean result = SecureUtil.validateSignBySoft256(x509Cert.getPublicKey(), SecureUtil.base64Decode(stringSign.getBytes(encoding)), SecureUtil.sha256X16(stringData.getBytes(encoding)).getBytes(encoding));
 					LogUtil.writeLog("验证签名" + (result? "成功":"失败"));
 					return result;
 				} catch (UnsupportedEncodingException e) {
@@ -407,8 +397,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSha256 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sha256X16Str(config.getSecureKey(), encoding);
-			String strAfterSha256 = SecureUtil.sha256X16Str(strBeforeSha256, encoding);
+					+ SecureUtil.sha256X16(config.getSecureKey().getBytes(encoding));
+			String strAfterSha256 = SecureUtil.sha256X16(strBeforeSha256.getBytes(encoding));
 			boolean result =  stringSign.equals(strAfterSha256);
 			LogUtil.writeLog("验证签名" + (result? "成功":"失败"));
 			return result;
@@ -421,9 +411,8 @@ public class SDKUtil {
 			LogUtil.writeLog("待验签返回报文串：["+stringData+"]");
 			String strBeforeSM3 = stringData
 					+ SDKConstants.AMPERSAND
-					+ SecureUtil.sm3X16Str(config.getSecureKey(), encoding);
-			String strAfterSM3 = SecureUtil
-					.sm3X16Str(strBeforeSM3, encoding);
+					+ SecureUtil.sm3X16(config.getSecureKey().getBytes(encoding));
+			String strAfterSM3 = SecureUtil.sm3X16(strBeforeSM3.getBytes(encoding));
 			boolean result =  stringSign.equals(strAfterSM3);
 			LogUtil.writeLog("验证签名" + (result? "成功":"失败"));
 			return result;

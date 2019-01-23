@@ -130,10 +130,7 @@ public class AcpService {
 
 		try {
 			// 验证签名需要用银联发给商户的公钥证书.
-			return SecureUtil.validateSignBySoft(CertUtil
-					.getValidatePublicKey(certId), SecureUtil.base64Decode(sign
-					.getBytes(encoding)), SecureUtil.sha1X16(data,
-					encoding));
+			return SecureUtil.validateSignBySoft(CertUtil.getValidatePublicKey(certId), SecureUtil.base64Decode(sign.getBytes(encoding)), SecureUtil.sha1X16(data.getBytes(encoding)).getBytes(encoding));
 		} catch (UnsupportedEncodingException e) {
 			LogUtil.writeErrorLog(e.getMessage(), e);
 		} catch (Exception e) {
@@ -149,7 +146,7 @@ public class AcpService {
 	 * @param encoding
 	 * @return 应答http 200返回true ,其他false<br>
 	 */
-	public static Map<String,String> post(Map<String, String> reqData, String reqUrl, String encoding) {
+	public static Map<String,String> post(Map<String, String> reqData, String reqUrl, String encoding) throws Exception {
 		Map<String, String> rspData = null;
 		LogUtil.writeLog("请求银联地址:" + reqUrl);
 		//发送后台请求数据
@@ -177,8 +174,7 @@ public class AcpService {
 	 * @param encoding<br>
 	 * @return
 	 */
-	public static String get(String reqUrl,String encoding) {
-		
+	public static String get(String reqUrl,String encoding) throws Exception {
 		LogUtil.writeLog("请求银联地址:" + reqUrl);
 		//发送后台请求数据
 		HttpClient hc = new HttpClient(reqUrl, 30000, 30000);
@@ -521,7 +517,8 @@ public class AcpService {
 	 * @return 加密的内容<br>
 	 */
 	public static String encryptPin(String accNo, String pin, String encoding) throws Exception {
-		return SecureUtil.encryptPin(accNo, pin, encoding, CertUtil.getEncryptCertPublicKey());
+		byte[] data = SecureUtil.pin2PinBlockWithCardNO(pin, accNo);
+		return new String(SecureUtil.encryptAndEncode(data, CertUtil.getEncryptCertPublicKey()), encoding);
 	}
 	
 	/**
@@ -531,7 +528,7 @@ public class AcpService {
 	 * @return 加密的密文<br>
 	 */
 	public static String encryptData(String data, String encoding) throws Exception {
-		return SecureUtil.encryptData(data, encoding, CertUtil.getEncryptCertPublicKey());
+		return new String(SecureUtil.encryptAndEncode(data.getBytes(encoding), CertUtil.getEncryptCertPublicKey()), encoding);
 	}
 	
 	/**
@@ -541,7 +538,7 @@ public class AcpService {
 	 * @return 解密后的明文<br>
 	 */
 	public static String decryptData(String base64EncryptedInfo, String encoding) throws Exception {
-		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil.getSignCertPrivateKey());
+		return new String(SecureUtil.decodeAndDecrypt(base64EncryptedInfo.getBytes(encoding), CertUtil.getSignCertPrivateKey()), encoding);
 	}
 	
 	/**
@@ -553,7 +550,7 @@ public class AcpService {
 	 * @return
 	 */
 	public static String decryptData(String base64EncryptedInfo, String certPath, String certPwd, String encoding) throws Exception {
-		return SecureUtil.decryptData(base64EncryptedInfo, encoding, CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd));
+		return new String(SecureUtil.decodeAndDecrypt(base64EncryptedInfo.getBytes(encoding), CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd)), encoding);
 	}
 
 	/**
@@ -564,7 +561,7 @@ public class AcpService {
 	 * @deprecated
 	 */
 	public static String encryptTrack(String trackData, String encoding) throws Exception {
-		return SecureUtil.encryptData(trackData, encoding, CertUtil.getEncryptTrackPublicKey());
+		return new String(SecureUtil.encryptAndEncode(trackData.getBytes(encoding), CertUtil.getEncryptTrackPublicKey()), encoding);
 	}
 	
 	/**
@@ -586,6 +583,7 @@ public class AcpService {
 		byte [] rawByte = rawStr.getBytes(encoding);
 		return new String(SecureUtil.base64Encode(rawByte),encoding);
 	}
+
 	/**
 	 * 对base64的字符串解base64<br>
 	 * @param base64Str<br>
@@ -597,7 +595,6 @@ public class AcpService {
 		byte [] rawByte = base64Str.getBytes(encoding);
 		return new String(SecureUtil.base64Decode(rawByte),encoding);	
 	}
-
 
 	/**
 	 * 
