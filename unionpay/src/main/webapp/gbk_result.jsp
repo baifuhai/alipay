@@ -1,6 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=gbk"
-    pageEncoding="gbk"%>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<%@ page language="java" contentType="text/html; charset=gbk" pageEncoding="gbk"%>
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=gbk" />
@@ -20,7 +19,7 @@ body table tr td {
 		<tr>
 			<th colspan="2" align="center">响应结果</th>
 		</tr>
-		${result }
+		${result}
 	</table>
 </body>
 </html>

@@ -1,12 +1,16 @@
 package com.unionpay.acp.sdk;
 
+import com.test.unionpay.util.DemoUtil;
+import com.test.unionpay.util.WebUtil;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,12 +18,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @ClassName AcpService
- * @Description acpsdk接口服务类，接入商户集成请可以直接参考使用本类中的方法
- * @date 2016-7-22 下午2:44:37
- * 声明：以下代码只是为了方便接入方测试而提供的样例代码，商户可以根据自己需要，按照技术文档编写。该代码仅供参考，不提供编码，性能，规范性等方面的保障
- */
 public class AcpService {
 
 	/**
@@ -27,26 +25,11 @@ public class AcpService {
 	 * 功能：对请求报文进行签名,并计算赋值certid,signature字段并返回<br>
 	 * @param reqData 请求报文map<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
-	 * @return　签名后的map对象<br>
+	 * @return
 	 */
 	public static Map<String, String> sign(Map<String, String> reqData, String encoding) throws Exception {
-		reqData = SDKUtil.filterBlank(reqData);
+		SDKUtil.filterBlank(reqData);
 		SDKUtil.sign(reqData, encoding);
-		return reqData;
-	}
-	
-	/**
-	 * 同signByCertInfo<br>
-	 * @param reqData
-	 * @param certPath
-	 * @param certPwd
-	 * @param encoding
-	 * @return
-	 * @deprecated
-	 */
-	public static Map<String, String> sign(Map<String, String> reqData, String certPath, String certPwd,String encoding) {
-		reqData = SDKUtil.filterBlank(reqData);
-		SDKUtil.signByCertInfo(reqData,certPath,certPwd,encoding);
 		return reqData;
 	}
 	
@@ -57,12 +40,11 @@ public class AcpService {
 	 * @param certPath 签名私钥文件（带路径）<br>
 	 * @param certPwd 签名私钥密码<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
-	 * @return　签名后的map对象<br>
+	 * @return
 	 */
-	public static Map<String, String> signByCertInfo(Map<String, String> reqData, String certPath, 
-			String certPwd,String encoding) {
-		reqData = SDKUtil.filterBlank(reqData);
-		SDKUtil.signByCertInfo(reqData,certPath,certPwd,encoding);
+	public static Map<String, String> sign(Map<String, String> reqData, String certPath, String certPwd, String encoding) throws Exception {
+		SDKUtil.filterBlank(reqData);
+		SDKUtil.sign(reqData, certPath, certPwd, encoding);
 		return reqData;
 	}
 	
@@ -72,10 +54,10 @@ public class AcpService {
 	 * @param reqData 请求报文map<br>
 	 * @param secureKey 签名对称密钥<br>
 	 * @param encoding 上送请求报文域encoding字段的值<br>
-	 * @return　签名后的map对象<br>
+	 * @return
 	 */
-	public static Map<String, String> signBySecureKey(Map<String, String> reqData, String secureKey, String encoding) throws Exception {
-		reqData = SDKUtil.filterBlank(reqData);
+	public static Map<String, String> sign(Map<String, String> reqData, String secureKey, String encoding) throws Exception {
+		SDKUtil.filterBlank(reqData);
 		SDKUtil.signBySecureKey(reqData, secureKey, encoding);
 		return reqData;
 	}
@@ -99,7 +81,6 @@ public class AcpService {
 	public static boolean validateBySecureKey(Map<String, String> rspData, String secureKey, String encoding) throws Exception {
 		return SDKUtil.validateBySecureKey(rspData, secureKey, encoding);
 	}
-	
 
 	/**
 	 * @deprecated 5.1.0开发包已删除此方法，请直接参考5.1.0开发包中的VerifyAppData.java验签。
@@ -109,7 +90,7 @@ public class AcpService {
 	 */
 	public static boolean validateAppResponse(String jsonData, String encoding) {
 		LogUtil.writeLog("控件应答信息验签处理开始：[" + jsonData + "]");
-		if (SDKUtil.isEmpty(encoding)) {
+		if (StringUtils.isBlank(encoding)) {
 			encoding = "UTF-8";
 		}
 
@@ -140,61 +121,47 @@ public class AcpService {
 	}
 	
 	/**
+	 * 功能：http Get方法 便民缴费产品中使用<br>
+	 * @param reqUrl 请求地址<br>
+	 * @param encoding<br>
+	 * @return
+	 */
+	public static String get(String reqUrl, String encoding) throws Exception {
+		HttpUtil.Result result = HttpUtil.sendGet(reqUrl, encoding);
+		int status = result.getCode();
+		if (status == HttpServletResponse.SC_OK) {
+			String resultString = result.getResponse();
+			if (null != resultString && !"".equals(resultString)) {
+				return resultString;
+			}
+		} else {
+			LogUtil.writeLog("返回http状态码["+status+"]，请检查请求报文或者请求地址是否正确");
+		}
+		return null;
+	}
+
+	/**
 	 * 功能：后台交易提交请求报文并接收同步应答报文<br>
 	 * @param reqData 请求报文<br>
 	 * @param reqUrl  请求地址<br>
 	 * @param encoding
 	 * @return 应答http 200返回true ,其他false<br>
 	 */
-	public static Map<String,String> post(Map<String, String> reqData, String reqUrl, String encoding) throws Exception {
+	public static Map<String, String> post(Map<String, String> reqData, String reqUrl, String encoding) throws Exception {
 		Map<String, String> rspData = null;
-		LogUtil.writeLog("请求银联地址:" + reqUrl);
-		//发送后台请求数据
-		HttpClient hc = new HttpClient(reqUrl, 30000, 30000);//连接超时时间，读超时时间（可自行判断，修改）
-		try {
-			int status = hc.send(reqData, encoding);
-			if (200 == status) {
-				String resultString = hc.getResult();
-				if (null != resultString && !"".equals(resultString)) {
-					// 将返回结果转换为map
-					rspData  = SDKUtil.convertResultStringToMap(resultString);
-				}
-			}else{
-				LogUtil.writeLog("返回http状态码["+status+"]，请检查请求报文或者请求地址是否正确");
+		HttpUtil.Result result = HttpUtil.sendPost(reqUrl, reqData, encoding);
+		int status = result.getCode();
+		if (status == HttpServletResponse.SC_OK) {
+			String resultString = result.getResponse();
+			if (null != resultString && !"".equals(resultString)) {
+				rspData = SDKUtil.convertResultStringToMap(resultString);
 			}
-		} catch (Exception e) {
-			LogUtil.writeErrorLog(e.getMessage(), e);
+		} else {
+			LogUtil.writeLog("返回http状态码["+status+"]，请检查请求报文或者请求地址是否正确");
 		}
 		return rspData;
 	}
-	
-	/**
-	 * 功能：http Get方法 便民缴费产品中使用<br>
-	 * @param reqUrl 请求地址<br>
-	 * @param encoding<br>
-	 * @return
-	 */
-	public static String get(String reqUrl,String encoding) throws Exception {
-		LogUtil.writeLog("请求银联地址:" + reqUrl);
-		//发送后台请求数据
-		HttpClient hc = new HttpClient(reqUrl, 30000, 30000);
-		try {
-			int status = hc.sendGet(encoding);
-			if (200 == status) {
-				String resultString = hc.getResult();
-				if (null != resultString && !"".equals(resultString)) {
-					return resultString;
-				}
-			}else{
-				LogUtil.writeLog("返回http状态码["+status+"]，请检查请求报文或者请求地址是否正确");
-			}
-		} catch (Exception e) {
-			LogUtil.writeErrorLog(e.getMessage(), e);
-		}
-		return null;
-	}
-	
-	
+
 	/**
 	 * 功能：前台交易构造HTTP POST自动提交表单<br>
 	 * @param reqUrl 表单提交地址<br>
@@ -204,9 +171,8 @@ public class AcpService {
 	 */
 	public static String createAutoFormHtml(String reqUrl, Map<String, String> hiddens, String encoding) {
 		StringBuffer sf = new StringBuffer();
-		sf.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset="+encoding+"\"/></head><body>");
-		sf.append("<form id = \"pay_form\" action=\"" + reqUrl
-				+ "\" method=\"post\">");
+		sf.append("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=" + encoding +"\"/></head><body>");
+		sf.append("<form id = \"pay_form\" action=\"" + reqUrl + "\" method=\"post\">");
 		if (null != hiddens && 0 != hiddens.size()) {
 			Set<Entry<String, String>> set = hiddens.entrySet();
 			Iterator<Entry<String, String>> it = set.iterator();
@@ -214,8 +180,7 @@ public class AcpService {
 				Entry<String, String> ey = it.next();
 				String key = ey.getKey();
 				String value = ey.getValue();
-				sf.append("<input type=\"hidden\" name=\"" + key + "\" id=\""
-						+ key + "\" value=\"" + value + "\"/>");
+				sf.append("<input type=\"hidden\" name=\"" + key + "\" id=\"" + key + "\" value=\"" + value + "\"/>");
 			}
 		}
 		sf.append("</form>");
@@ -234,7 +199,7 @@ public class AcpService {
 	 * @param filePath 批量文件-全路径文件名<br>
 	 * @return
 	 */
-	public static String enCodeFileContent(String filePath,String encoding){
+	public static String encodeFileContent(String filePath,String encoding){
 		String baseFileContent = "";
 		
 		File file = new File(filePath);
@@ -276,7 +241,7 @@ public class AcpService {
 	 * @param fileDirectory 落地的文件目录（绝对路径）
 	 * @param encoding 上送请求报文域encoding字段的值<br>	
 	 */
-	public static String deCodeFileContent(Map<String, String> resData, String fileDirectory, String encoding) {
+	public static String decodeFileContent(Map<String, String> resData, String fileDirectory, String encoding) {
 		// 解析返回文件
 		String filePath = null;
 		String fileContent = resData.get(SDKConstants.param_fileContent);
@@ -285,7 +250,7 @@ public class AcpService {
 			try {
 				byte[] fileArray = SDKUtil.inflater(SecureUtil.base64Decode(fileContent.getBytes(encoding)));
 
-				if (SDKUtil.isEmpty(resData.get("fileName"))) {
+				if (StringUtils.isBlank(resData.get("fileName"))) {
 					filePath = fileDirectory + File.separator + resData.get("merId")
 							+ "_" + resData.get("batchNo")
 							+ "_" + resData.get("txnTime") + ".txt";
@@ -376,11 +341,8 @@ public class AcpService {
 		String customerInfo = sf.append("}").toString();
 		LogUtil.writeLog("组装的customerInfo明文："+customerInfo);
 		try {
-			return new String(SecureUtil.base64Encode(sf.toString().getBytes(
-					encoding)),encoding);
-		} catch (UnsupportedEncodingException e) {
-			LogUtil.writeErrorLog(e.getMessage(), e);
-		} catch (IOException e) {
+			return new String(SecureUtil.base64Encode(sf.toString().getBytes(encoding)),encoding);
+		} catch (Exception e) {
 			LogUtil.writeErrorLog(e.getMessage(), e);
 		}
 		return customerInfo;
@@ -439,9 +401,7 @@ public class AcpService {
 		LogUtil.writeLog("组装的customerInfo明文："+customerInfo);
 		try {
 			return new String(SecureUtil.base64Encode(sf.toString().getBytes(encoding)),encoding);
-		} catch (UnsupportedEncodingException e) {
-			LogUtil.writeErrorLog(e.getMessage(), e);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LogUtil.writeErrorLog(e.getMessage(), e);
 		}
 		return customerInfo;
@@ -518,7 +478,7 @@ public class AcpService {
 	 */
 	public static String encryptPin(String accNo, String pin, String encoding) throws Exception {
 		byte[] data = SecureUtil.pin2PinBlockWithCardNO(pin, accNo);
-		return new String(SecureUtil.encryptAndEncode(data, CertUtil.getEncryptCertPublicKey()), encoding);
+		return new String(SecureUtil.encryptAndEncode(data, CertUtil.getEncryptCert().getPublicKey()), encoding);
 	}
 	
 	/**
@@ -528,7 +488,7 @@ public class AcpService {
 	 * @return 加密的密文<br>
 	 */
 	public static String encryptData(String data, String encoding) throws Exception {
-		return new String(SecureUtil.encryptAndEncode(data.getBytes(encoding), CertUtil.getEncryptCertPublicKey()), encoding);
+		return new String(SecureUtil.encryptAndEncode(data.getBytes(encoding), CertUtil.getEncryptCert().getPublicKey()), encoding);
 	}
 	
 	/**
@@ -550,7 +510,7 @@ public class AcpService {
 	 * @return
 	 */
 	public static String decryptData(String base64EncryptedInfo, String certPath, String certPwd, String encoding) throws Exception {
-		return new String(SecureUtil.decodeAndDecrypt(base64EncryptedInfo.getBytes(encoding), CertUtil.getSignCertPrivateKeyByStoreMap(certPath, certPwd)), encoding);
+		return new String(SecureUtil.decodeAndDecrypt(base64EncryptedInfo.getBytes(encoding), CertUtil.getSignCertPrivateKey(certPath, certPwd)), encoding);
 	}
 
 	/**
@@ -568,7 +528,7 @@ public class AcpService {
 	 * 获取敏感信息加密证书的物理序列号<br>
 	 * @return
 	 */
-	public static String getEncryptCertId(){
+	public static String getEncryptCertId() throws Exception {
 		return CertUtil.getEncryptCertId();
 	}
 	
@@ -643,8 +603,7 @@ public class AcpService {
 	 * @param encoding
 	 * @return
 	 */
-	public static int updateEncryptCert(Map<String, String> resData,
-			String encoding) {
+	public static int updateEncryptCert(Map<String, String> resData, String encoding) throws Exception {
 		return SDKUtil.getEncryptCert(resData, encoding);
 	}
 	
@@ -656,4 +615,5 @@ public class AcpService {
 	public static int genLuhn(String number){
 		return SecureUtil.genLuhn(number);
 	}
+
 }

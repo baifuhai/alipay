@@ -1,28 +1,22 @@
 package com.unionpay.acp.sdk;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.CertPathBuilder;
 import java.security.cert.CertStore;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
@@ -36,10 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.unionpay.acp.sdk.SDKConstants.UNIONPAY_CNNAME;
-import static com.unionpay.acp.sdk.SDKUtil.isEmpty;
 
 /**
  * 证书工具类，主要用于对证书的加载和使用
@@ -49,27 +39,23 @@ public class CertUtil {
 	/** 证书容器，存储对商户请求报文签名私钥证书. */
 	private static KeyStore keyStore = null;
 
-	/** 敏感信息加密公钥证书 */
-	private static X509Certificate encryptCert = null;
-
-	/** 磁道加密公钥 */
-	private static PublicKey encryptTrackKey = null;
-
-	/** 验证银联返回报文签名证书. */
-	private static X509Certificate validateCert = null;
-
 	/** 验签中级证书 */
 	private static X509Certificate middleCert = null;
 
 	/** 验签根证书 */
 	private static X509Certificate rootCert = null;
 
-	/** 验证银联返回报文签名的公钥证书存储Map. */
-	private static Map<String, X509Certificate> certMap = new HashMap<String, X509Certificate>();
+	/** 敏感信息加密公钥证书 */
+	private static X509Certificate encryptCert = null;
 
-	/** 商户私钥存储Map */
-	private final static Map<String, KeyStore> keyStoreMap = new ConcurrentHashMap<String, KeyStore>();
-	
+	/** 磁道加密公钥 */
+	private static PublicKey encryptTrackKey = null;
+
+	/** 验证银联返回报文签名的公钥证书存储Map. */
+	private static final Map<String, X509Certificate> certMap = new HashMap<String, X509Certificate>();
+
+	private static final SDKConfig config = SDKConfig.getInstance();
+
 	static {
 		init();
 	}
@@ -79,13 +65,26 @@ public class CertUtil {
 	 */
 	private static void init() {
 		try {
-			addProvider();//向系统添加BC provider
-			initSignCert();//初始化签名私钥证书
-			initMiddleCert();//初始化验签证书的中级证书
-			initRootCert();//初始化验签证书的根证书
-			initEncryptCert();//初始化加密公钥
-			initTrackKey();//构建磁道加密公钥
-			initValidateCertFromDir();//初始化所有的验签证书
+			// 向系统添加BC provider
+			addProvider();
+
+			// 签名私钥证书
+			genSignCert();
+
+			// 银联验签公钥中级证书
+			middleCert = genCert(config.getMiddleCertPath());
+
+			// 银联验签公钥根证书
+			rootCert = genCert(config.getRootCertPath());
+
+			// 加密公钥证书
+			encryptCert = genCert(config.getEncryptCertPath());
+
+			// 磁道加密公钥
+			//encryptTrackKey = getPublicKey(config.getEncryptTrackKeyModulus(), config.getEncryptTrackKeyExponent());
+
+			// 初始化目录里的验签证书
+			//initCertFromDir();
 		} catch (Exception e) {
 			LogUtil.writeErrorLog("init失败。（如果是用对称密钥签名的可无视此异常。）", e);
 		}
@@ -107,539 +106,189 @@ public class CertUtil {
 	}
 	
 	/**
-	 * 用配置文件acp_sdk.properties中配置的私钥路径和密码 加载签名证书
+	 * 加载签名证书
 	 */
-	private static void initSignCert() {
-		SDKConfig config = SDKConfig.config;
-
+	private static void genSignCert() throws Exception {
 		if (!"01".equals(config.getSignMethod())) {
 			LogUtil.writeLog("非rsa签名方式，不加载签名证书。");
 			return;
 		}
 
-		if (config.getSignCertPath() == null || config.getSignCertPwd() == null || config.getSignCertType() == null) {
-			LogUtil.writeErrorLog("WARN: SIGNCERT_PATH 或 SIGNCERT_PWD 或 SIGNCERT_TYPE 为空。停止加载签名证书。");
-			return;
-		}
-
-		if (keyStore != null) {
-			keyStore = null;
-		}
-
-		try {
-			keyStore = getKeyInfo(config.getSignCertPath(), config.getSignCertPwd(), config.getSignCertType());
-			LogUtil.writeLog("InitSignCert Successful. CertId=[" + getSignCertId() + "]");
-		} catch (IOException e) {
-			LogUtil.writeErrorLog("InitSignCert Error", e);
-		}
-	}
-
-	/**
-	 * 加载银联公钥上级证书（中级证书）
-	 */
-	private static void initMiddleCert() {
-		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载中级证书==>" + config.getMiddleCertPath());
-		if (!isEmpty(config.getMiddleCertPath())) {
-			middleCert = initCert(config.getMiddleCertPath());
-			LogUtil.writeLog("Load MiddleCert Successful");
-		} else {
-			LogUtil.writeLog("WARN: acpsdk.middle.path is empty");
-		}
-	}
-
-	/**
-	 * 加载银联公钥上级证书（根证书）
-	 */
-	private static void initRootCert() {
-		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载根证书==>" + config.getRootCertPath());
-		if (!isEmpty(config.getRootCertPath())) {
-			rootCert = initCert(config.getRootCertPath());
-			LogUtil.writeLog("Load RootCert Successful");
-		} else {
-			LogUtil.writeLog("WARN: acpsdk.rootCert.path is empty");
-		}
-	}
-
-	/**
-	 * 加载敏感信息加密证书
-	 */
-	private static void initEncryptCert() {
-		SDKConfig config = SDKConfig.config;
-		LogUtil.writeLog("加载敏感信息加密证书==>" + config.getEncryptCertPath());
-		if (!isEmpty(config.getEncryptCertPath())) {
-			encryptCert = initCert(config.getEncryptCertPath());
-			LogUtil.writeLog("Load EncryptCert Successful");
-		} else {
-			LogUtil.writeLog("WARN: acpsdk.encryptCert.path is empty");
-		}
-	}
-	
-	/**
-	 * 加载磁道公钥
-	 */
-	private static void initTrackKey() {
-		SDKConfig config = SDKConfig.config;
-		if (!isEmpty(config.getEncryptTrackKeyModulus()) && !isEmpty(config.getEncryptTrackKeyExponent())) {
-			encryptTrackKey = getPublicKey(config.getEncryptTrackKeyModulus(), config.getEncryptTrackKeyExponent());
-			LogUtil.writeLog("LoadEncryptTrackKey Successful");
-		} else {
-			LogUtil.writeLog("WARN: acpsdk.encryptTrackKey.modulus or acpsdk.encryptTrackKey.exponent is empty");
-		}
+		keyStore = genKeyStore(config.getSignCertPath(), config.getSignCertPwd(), config.getSignCertType());
 	}
 
 	/**
 	 * 加载验证签名证书
 	 */
-	private static void initValidateCertFromDir() {
-		SDKConfig config = SDKConfig.config;
+	private static void initCertFromDir() {
 		if(!"01".equals(config.getSignMethod())){
 			LogUtil.writeLog("非rsa签名方式，不加载验签证书。");
 			return;
 		}
 
-		certMap.clear();
 		String dir = config.getValidateCertDir();
 		LogUtil.writeLog("加载验证签名证书目录==>" + dir +" 注：如果请求报文中version=5.1.0那么此验签证书目录使用不到，可以不需要设置（version=5.0.0必须设置）。");
-		if (isEmpty(dir)) {
+		if (StringUtils.isBlank(dir)) {
 			LogUtil.writeErrorLog("WARN: acpsdk.validateCert.dir is empty");
 			return;
 		}
-		CertificateFactory cf = null;
-		FileInputStream in = null;
-		try {
-			cf = CertificateFactory.getInstance("X.509", "BC");
-		}catch (NoSuchProviderException e) {
-			LogUtil.writeErrorLog("LoadVerifyCert Error: No BC Provider", e);
-			return ;
-		} catch (CertificateException e) {
-			LogUtil.writeErrorLog("LoadVerifyCert Error", e);
-			return ;
-		}
+
 		File fileDir = new File(dir);
-		File[] files = fileDir.listFiles(new CerFilter());
+		File[] files = fileDir.listFiles();
 		for (int i = 0; i < files.length; i++) {
-			File file = files[i];
 			try {
-				in = new FileInputStream(file.getAbsolutePath());
-				validateCert = (X509Certificate) cf.generateCertificate(in);
-				if(validateCert == null) {
-					LogUtil.writeErrorLog("Load verify cert error, " + file.getAbsolutePath() + " has error cert content.");
-					continue;
+				File file = files[i];
+				if (file.getName().toLowerCase().endsWith(".cer")) {
+					X509Certificate cert = genCert(file.getAbsolutePath());
+					certMap.put(cert.getSerialNumber().toString(), cert);
 				}
-				certMap.put(validateCert.getSerialNumber().toString(),
-						validateCert);
-				// 打印证书加载信息,供测试阶段调试
-				LogUtil.writeLog("[" + file.getAbsolutePath() + "][CertId="
-						+ validateCert.getSerialNumber().toString() + "]");
-			} catch (CertificateException e) {
-				LogUtil.writeErrorLog("LoadVerifyCert Error", e);
-			}catch (FileNotFoundException e) {
-				LogUtil.writeErrorLog("LoadVerifyCert Error File Not Found", e);
-			}finally {
-				if (null != in) {
-					try {
-						in.close();
-					} catch (IOException e) {
-						LogUtil.writeErrorLog(e.toString());
-					}
-				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
-		LogUtil.writeLog("LoadVerifyCert Finish");
 	}
 
-	/**
-	 * 用给定的路径和密码 加载签名证书，并保存到certKeyStoreMap
-	 * 
-	 * @param certFilePath
-	 * @param certPwd
-	 */
-	private static void loadSignCert(String certFilePath, String certPwd) {
-		KeyStore keyStore = null;
+	private static X509Certificate genCert(String path) throws Exception {
+		InputStream in = null;
 		try {
-			keyStore = getKeyInfo(certFilePath, certPwd, "PKCS12");
-			keyStoreMap.put(certFilePath, keyStore);
-			LogUtil.writeLog("LoadRsaCert Successful");
-		} catch (IOException e) {
-			LogUtil.writeErrorLog("LoadRsaCert Error", e);
-		}
-	}
-
-	/**
-	 * 通过证书路径初始化为公钥证书
-	 * @param path
-	 * @return
-	 */
-	private static X509Certificate initCert(String path) {
-		X509Certificate encryptCertTemp = null;
-		CertificateFactory cf = null;
-		FileInputStream in = null;
-		try {
-			cf = CertificateFactory.getInstance("X.509", "BC");
-			in = new FileInputStream(path);
-			encryptCertTemp = (X509Certificate) cf.generateCertificate(in);
-			// 打印证书加载信息,供测试阶段调试
-			LogUtil.writeLog("[" + path + "][CertId="
-					+ encryptCertTemp.getSerialNumber().toString() + "]");
-		} catch (CertificateException e) {
-			LogUtil.writeErrorLog("InitCert Error", e);
-		} catch (FileNotFoundException e) {
-			LogUtil.writeErrorLog("InitCert Error File Not Found", e);
-		} catch (NoSuchProviderException e) {
-			LogUtil.writeErrorLog("LoadVerifyCert Error No BC Provider", e);
+			if (path.startsWith("classpath:")) {
+				in = CertUtil.class.getClassLoader().getResourceAsStream(path.replaceFirst("^classpath:", ""));
+			} else {
+				in = new FileInputStream(path);
+			}
+			return genCert(in);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
 		} finally {
-			if (null != in) {
+			if (in != null) {
 				try {
 					in.close();
 				} catch (IOException e) {
-					LogUtil.writeErrorLog(e.toString());
+					e.printStackTrace();
 				}
 			}
 		}
-		return encryptCertTemp;
 	}
-	
-	/**
-	 * 通过keyStore 获取私钥签名证书PrivateKey对象
-	 * 
-	 * @return
-	 */
-	public static PrivateKey getSignCertPrivateKey() {
-		SDKConfig config = SDKConfig.config;
-		try {
-			Enumeration<String> aliasenum = keyStore.aliases();
-			String keyAlias = null;
-			if (aliasenum.hasMoreElements()) {
-				keyAlias = aliasenum.nextElement();
-			}
-			PrivateKey privateKey = (PrivateKey) keyStore.getKey(keyAlias, config.getSignCertPwd().toCharArray());
-			return privateKey;
-		} catch (KeyStoreException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKey Error", e);
-			return null;
-		} catch (UnrecoverableKeyException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKey Error", e);
-			return null;
-		} catch (NoSuchAlgorithmException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKey Error", e);
-			return null;
-		}
+	public static X509Certificate genCertByStr(String x509CertString) throws Exception {
+		InputStream in = new ByteArrayInputStream(x509CertString.getBytes("ISO-8859-1"));
+		return genCert(in);
+	}
+	private static X509Certificate genCert(InputStream in) throws Exception {
+		CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
+		X509Certificate cert = (X509Certificate) cf.generateCertificate(in);
+		return cert;
 	}
 
-	/**
-	 * 通过指定路径的私钥证书  获取PrivateKey对象
-	 * 
-	 * @return
-	 */
-	public static PrivateKey getSignCertPrivateKeyByStoreMap(String certPath, String certPwd) {
-		if (!keyStoreMap.containsKey(certPath)) {
-			loadSignCert(certPath, certPwd);
+	public static PrivateKey getSignCertPrivateKey() throws Exception {
+		return getSignCertPrivateKey(keyStore, config.getSignCertPwd());
+	}
+	public static PrivateKey getSignCertPrivateKey(String certPath, String password) throws Exception {
+		KeyStore keyStore = genKeyStore(certPath, password, "PKCS12");
+		return getSignCertPrivateKey(keyStore, password);
+	}
+	public static PrivateKey getSignCertPrivateKey(KeyStore keyStore, String password) throws Exception {
+		Enumeration<String> aliasesEnum = keyStore.aliases();
+		if (aliasesEnum.hasMoreElements()) {
+			String keyAlias = aliasesEnum.nextElement();
+			PrivateKey key = (PrivateKey) keyStore.getKey(keyAlias, password.toCharArray());
+			return key;
 		}
-		try {
-			Enumeration<String> aliasenum = keyStoreMap.get(certPath)
-					.aliases();
-			String keyAlias = null;
-			if (aliasenum.hasMoreElements()) {
-				keyAlias = aliasenum.nextElement();
-			}
-			PrivateKey privateKey = (PrivateKey) keyStoreMap.get(certPath)
-					.getKey(keyAlias, certPwd.toCharArray());
-			return privateKey;
-		} catch (KeyStoreException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKeyByStoreMap Error", e);
-			return null;
-		} catch (UnrecoverableKeyException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKeyByStoreMap Error", e);
-			return null;
-		} catch (NoSuchAlgorithmException e) {
-			LogUtil.writeErrorLog("getSignCertPrivateKeyByStoreMap Error", e);
-			return null;
-		}
+		return null;
 	}
 
-	/**
-	 * 获取敏感信息加密证书PublicKey
-	 * 
-	 * @return
-	 */
-	public static PublicKey getEncryptCertPublicKey() {
-		SDKConfig config = SDKConfig.config;
-		if (null == encryptCert) {
-			String path = config.getEncryptCertPath();
-			if (!isEmpty(path)) {
-				encryptCert = initCert(path);
-				return encryptCert.getPublicKey();
-			} else {
-				LogUtil.writeErrorLog("acpsdk.encryptCert.path is empty");
-				return null;
-			}
-		} else {
-			return encryptCert.getPublicKey();
-		}
+	public static String getSignCertId() throws Exception {
+		return getSignCertId(keyStore);
 	}
-	
-	/**
-	 * 重置敏感信息加密证书公钥
-	 */
-	public static void resetEncryptCertPublicKey() {
-		encryptCert = null;
+	public static String getSignCertId(String certPath, String certPwd) throws Exception {
+		KeyStore keyStore = genKeyStore(certPath, certPwd, "PKCS12");
+		return getSignCertId(keyStore);
 	}
-	
-	/**
-	 * 获取磁道加密证书PublicKey
-	 * 
-	 * @return
-	 */
-	public static PublicKey getEncryptTrackPublicKey() {
-		if (null == encryptTrackKey) {
-			initTrackKey();
-		}
-		return encryptTrackKey;
-	}
-	
-	/**
-	 * 通过certId获取验签证书Map中对应证书PublicKey
-	 * 
-	 * @param certId 证书物理序号
-	 * @return 通过证书编号获取到的公钥
-	 */
-	public static PublicKey getValidatePublicKey(String certId) {
-		X509Certificate cf = null;
-		if (certMap.containsKey(certId)) {
-			// 存在certId对应的证书对象
-			cf = certMap.get(certId);
-			return cf.getPublicKey();
-		} else {
-			// 不存在则重新Load证书文件目录
-			initValidateCertFromDir();
-			if (certMap.containsKey(certId)) {
-				// 存在certId对应的证书对象
-				cf = certMap.get(certId);
-				return cf.getPublicKey();
-			} else {
-				LogUtil.writeErrorLog("缺少certId=[" + certId + "]对应的验签证书.");
-				return null;
-			}
-		}
-	}
-	
-	/**
-	 * 获取配置文件acp_sdk.properties中配置的签名私钥证书certId
-	 * 
-	 * @return 证书的物理编号
-	 */
-	public static String getSignCertId() {
-		try {
-			Enumeration<String> aliasenum = keyStore.aliases();
-			String keyAlias = null;
-			if (aliasenum.hasMoreElements()) {
-				keyAlias = aliasenum.nextElement();
-			}
-			X509Certificate cert = (X509Certificate) keyStore
-					.getCertificate(keyAlias);
+	private static String getSignCertId(KeyStore keyStore) throws Exception {
+		Enumeration<String> aliasesEnum = keyStore.aliases();
+		if (aliasesEnum.hasMoreElements()) {
+			String keyAlias = aliasesEnum.nextElement();
+			X509Certificate cert = (X509Certificate) keyStore.getCertificate(keyAlias);
 			return cert.getSerialNumber().toString();
-		} catch (Exception e) {
-			LogUtil.writeErrorLog("getSignCertId Error", e);
-			return null;
 		}
-	}
-
-	/**
-	 * 获取敏感信息加密证书的certId
-	 * 
-	 * @return
-	 */
-	public static String getEncryptCertId() {
-		SDKConfig config = SDKConfig.config;
-		if (null == encryptCert) {
-			String path = config.getEncryptCertPath();
-			if (!isEmpty(path)) {
-				encryptCert = initCert(path);
-				return encryptCert.getSerialNumber().toString();
-			} else {
-				LogUtil.writeErrorLog("acpsdk.encryptCert.path is empty");
-				return null;
-			}
-		} else {
-			return encryptCert.getSerialNumber().toString();
-		}
+		return null;
 	}
 
 	/**
 	 * 将签名私钥证书文件读取为证书存储对象
 	 * 
-	 * @param pfxkeyfile
-	 *            证书文件名
-	 * @param keypwd
-	 *            证书密码
-	 * @param type
-	 *            证书类型
-	 * @return 证书对象
-	 * @throws IOException 
+	 * @param pfxKeyFile 证书文件名
+	 * @param password 证书密码
+	 * @param type 证书类型
+	 * @return
+	 * @throws Exception
 	 */
-	private static KeyStore getKeyInfo(String pfxkeyfile, String keypwd,
-			String type) throws IOException {
-		LogUtil.writeLog("加载签名证书==>" + pfxkeyfile);
-		FileInputStream fis = null;
+	private static KeyStore genKeyStore(String pfxKeyFile, String password, String type) throws Exception {
+		InputStream in = null;
 		try {
-			KeyStore ks = KeyStore.getInstance(type, "BC");
-			LogUtil.writeLog("Load RSA CertPath=[" + pfxkeyfile + "],Pwd=["+ keypwd + "],type=["+type+"]");
-			fis = new FileInputStream(pfxkeyfile);
-			char[] nPassword = null;
-			nPassword = null == keypwd || "".equals(keypwd.trim()) ? null: keypwd.toCharArray();
-			if (null != ks) {
-				ks.load(fis, nPassword);
+			if (pfxKeyFile.startsWith("classpath:")) {
+				in = CertUtil.class.getClassLoader().getResourceAsStream(pfxKeyFile.replaceFirst("^classpath:", ""));
+			} else {
+				in = new FileInputStream(pfxKeyFile);
 			}
-			return ks;
+			KeyStore keyStore = KeyStore.getInstance(type, "BC");
+			keyStore.load(in, password.toCharArray());
+			return keyStore;
 		} catch (Exception e) {
-			LogUtil.writeErrorLog("getKeyInfo Error", e);
-			return null;
+			throw e;
 		} finally {
-			if(null!=fis)
-				fis.close();
-		}
-	}
-	
-	/**
-	 * 通过签名私钥证书路径，密码获取私钥证书certId
-	 * @param certPath
-	 * @param certPwd
-	 * @return
-	 */
-	public static String getCertIdByKeyStoreMap(String certPath, String certPwd) {
-		if (!keyStoreMap.containsKey(certPath)) {
-			// 缓存中未查询到,则加载RSA证书
-			loadSignCert(certPath, certPwd);
-		}
-		return getCertIdIdByStore(keyStoreMap.get(certPath));
-	}
-	
-	/**
-	 * 通过keystore获取私钥证书的certId值
-	 * @param keyStore
-	 * @return
-	 */
-	private static String getCertIdIdByStore(KeyStore keyStore) {
-		Enumeration<String> aliasenum = null;
-		try {
-			aliasenum = keyStore.aliases();
-			String keyAlias = null;
-			if (aliasenum.hasMoreElements()) {
-				keyAlias = aliasenum.nextElement();
+			if (in != null) {
+				try {
+					in.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
-			X509Certificate cert = (X509Certificate) keyStore
-					.getCertificate(keyAlias);
-			return cert.getSerialNumber().toString();
-		} catch (KeyStoreException e) {
-			LogUtil.writeErrorLog("getCertIdIdByStore Error", e);
-			return null;
 		}
 	}
 	
 	/**
-	 * 使用模和指数生成RSA公钥 注意：此代码用了默认补位方式，为RSA/None/PKCS1Padding，不同JDK默认的补位方式可能不同
+	 * 使用模和指数生成RSA公钥
+	 * 注意：此代码用了默认补位方式，为RSA/None/PKCS1Padding，不同JDK默认的补位方式可能不同
 	 * 
-	 * @param modulus
-	 *            模
-	 * @param exponent
-	 *            指数
+	 * @param modulus 模
+	 * @param exponent 指数
 	 * @return
 	 */
-	private static PublicKey getPublicKey(String modulus, String exponent) {
-		try {
-			BigInteger b1 = new BigInteger(modulus);
-			BigInteger b2 = new BigInteger(exponent);
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA", "BC");
-			RSAPublicKeySpec keySpec = new RSAPublicKeySpec(b1, b2);
-			return keyFactory.generatePublic(keySpec);
-		} catch (Exception e) {
-			LogUtil.writeErrorLog("构造RSA公钥失败：" + e);
-			return null;
-		}
-	}
-	
-	/**
-	 * 将字符串转换为X509Certificate对象.
-	 * 
-	 * @param x509CertString
-	 * @return
-	 */
-	public static X509Certificate genCertificateByStr(String x509CertString) {
-		X509Certificate x509Cert = null;
-		try {
-			CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC"); 
-			InputStream tIn = new ByteArrayInputStream(
-					x509CertString.getBytes("ISO-8859-1"));
-			x509Cert = (X509Certificate) cf.generateCertificate(tIn);
-		} catch (Exception e) {
-			LogUtil.writeErrorLog("gen certificate error", e);			
-		}
-		return x509Cert;
-	}
-	
-	/**
-	 * 从配置文件acp_sdk.properties中获取验签公钥使用的中级证书
-	 * @return
-	 */
-	public static X509Certificate getMiddleCert() {
-		SDKConfig config = SDKConfig.config;
-		if (null == middleCert) {
-			String path = config.getMiddleCertPath();
-			if (!isEmpty(path)) {
-				initMiddleCert();
-			} else {
-				LogUtil.writeErrorLog("MIDDLECERT_PATH not set in FILE_NAME");
-				return null;
-			}
-		}
-		return middleCert;
-	}
-	
-	/**
-	 * 从配置文件acp_sdk.properties中获取验签公钥使用的根证书
-	 * @return
-	 */
-	public static X509Certificate getRootCert() {
-		SDKConfig config = SDKConfig.config;
-		if (null == rootCert) {
-			String path = config.getRootCertPath();
-			if (!isEmpty(path)) {
-				initRootCert();
-			} else {
-				LogUtil.writeErrorLog("ROOTCERT_PATH not set in FILE_NAME");
-				return null;
-			}
-		}
-		return rootCert;
+	private static PublicKey getPublicKey(String modulus, String exponent) throws Exception {
+		BigInteger b1 = new BigInteger(modulus);
+		BigInteger b2 = new BigInteger(exponent);
+		KeyFactory keyFactory = KeyFactory.getInstance("RSA", "BC");
+		RSAPublicKeySpec keySpec = new RSAPublicKeySpec(b1, b2);
+		return keyFactory.generatePublic(keySpec);
 	}
 
 	/**
 	 * 获取证书的CN
-	 * @param aCert
+	 *
+	 * @param cert
 	 * @return
 	 */
-	private static String getIdentitiesFromCertficate(X509Certificate aCert) {
-		String tDN = aCert.getSubjectDN().toString(); 
+	private static String getIdentitiesFromCertificate(X509Certificate cert) {
+		String tDN = cert.getSubjectDN().toString();
 		String tPart = "";
 		if ((tDN != null)) {
 			String tSplitStr[] = tDN.substring(tDN.indexOf("CN=")).split("@");
-			if (tSplitStr != null && tSplitStr.length > 2
-					&& tSplitStr[2] != null)
+			if (tSplitStr != null && tSplitStr.length > 2 && tSplitStr[2] != null) {
 				tPart = tSplitStr[2];
+			}
 		}
 		return tPart;
 	}
 	
 	/**
-	 * 验证书链。
+	 * 验证证书链
+	 *
 	 * @param cert
 	 * @return
 	 */
-	private static boolean verifyCertificateChain(X509Certificate cert){
-		
-		if ( null == cert) {
+	private static boolean verifyCertificateChain(X509Certificate cert) throws Exception {
+		if (null == cert) {
 			LogUtil.writeErrorLog("cert must Not null");
 			return false;
 		}
@@ -657,14 +306,12 @@ public class CertUtil {
 		}
 		
 		try {
-		
 	        X509CertSelector selector = new X509CertSelector();
 	        selector.setCertificate(cert);
 	        
 	        Set<TrustAnchor> trustAnchors = new HashSet<TrustAnchor>();
 	        trustAnchors.add(new TrustAnchor(rootCert, null));
-	        PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(
-			        trustAnchors, selector);
+	        PKIXBuilderParameters pkixParams = new PKIXBuilderParameters(trustAnchors, selector);
 	
 	        Set<X509Certificate> intermediateCerts = new HashSet<X509Certificate>();
 	        intermediateCerts.add(rootCert);
@@ -673,15 +320,12 @@ public class CertUtil {
 	        
 	        pkixParams.setRevocationEnabled(false);
 	
-	        CertStore intermediateCertStore = CertStore.getInstance("Collection",
-	                new CollectionCertStoreParameters(intermediateCerts), "BC");
+	        CertStore intermediateCertStore = CertStore.getInstance("Collection", new CollectionCertStoreParameters(intermediateCerts), "BC");
 	        pkixParams.addCertStore(intermediateCertStore);
 	
 	        CertPathBuilder builder = CertPathBuilder.getInstance("PKIX", "BC");
 	        
-        	@SuppressWarnings("unused")
-			PKIXCertPathBuilderResult result = (PKIXCertPathBuilderResult) builder
-                .build(pkixParams);
+			PKIXCertPathBuilderResult result = (PKIXCertPathBuilderResult) builder.build(pkixParams);
 			LogUtil.writeLog("verify certificate chain succeed.");
 			return true;
         } catch (java.security.cert.CertPathBuilderException e){
@@ -695,22 +339,14 @@ public class CertUtil {
 	/**
 	 * 检查证书链
 	 * 
-	 * @param rootCerts
-	 *            根证书
-	 * @param cert
-	 *            待验证的证书
+	 * @param cert 待验证的证书
 	 * @return
 	 */
 	public static boolean verifyCertificate(X509Certificate cert) {
-		SDKConfig config = SDKConfig.config;
-		if ( null == cert) {
-			LogUtil.writeErrorLog("cert must Not null");
-			return false;
-		}
 		try {
 			cert.checkValidity();//验证有效期
 //			cert.verify(middleCert.getPublicKey());
-			if(!verifyCertificateChain(cert)){
+			if (!verifyCertificateChain(cert)) {
 				return false;
 			}
 		} catch (Exception e) {
@@ -718,17 +354,17 @@ public class CertUtil {
 			return false;
 		}
 		
-		if(config.isIfValidateCNName()){
+		if (config.isIfValidateCNName()) {
 			// 验证公钥是否属于银联
-			if(!UNIONPAY_CNNAME.equals(CertUtil.getIdentitiesFromCertficate(cert))) {
-				LogUtil.writeErrorLog("cer owner is not CUP:" + CertUtil.getIdentitiesFromCertficate(cert));
+			if(!SDKConstants.UNIONPAY_CNNAME.equals(CertUtil.getIdentitiesFromCertificate(cert))) {
+				LogUtil.writeErrorLog("cer owner is not CUP:" + CertUtil.getIdentitiesFromCertificate(cert));
 				return false;
 			}
 		} else {
 			// 验证公钥是否属于银联
-			if(!UNIONPAY_CNNAME.equals(CertUtil.getIdentitiesFromCertficate(cert)) 
-					&& !"00040000:SIGN".equals(CertUtil.getIdentitiesFromCertficate(cert))) {
-				LogUtil.writeErrorLog("cer owner is not CUP:" + CertUtil.getIdentitiesFromCertficate(cert));
+			if(!SDKConstants.UNIONPAY_CNNAME.equals(CertUtil.getIdentitiesFromCertificate(cert))
+					&& !"00040000:SIGN".equals(CertUtil.getIdentitiesFromCertificate(cert))) {
+				LogUtil.writeErrorLog("cer owner is not CUP:" + CertUtil.getIdentitiesFromCertificate(cert));
 				return false;
 			}
 		}
@@ -739,24 +375,20 @@ public class CertUtil {
 	 * 打印系统环境信息
 	 */
 	private static void printSysInfo() {
-		LogUtil.writeLog("================= SYS INFO begin====================");
+		LogUtil.writeLog("================= SYS INFO begin ====================");
 		LogUtil.writeLog("os_name:" + System.getProperty("os.name"));
 		LogUtil.writeLog("os_arch:" + System.getProperty("os.arch"));
 		LogUtil.writeLog("os_version:" + System.getProperty("os.version"));
-		LogUtil.writeLog("java_vm_specification_version:"
-				+ System.getProperty("java.vm.specification.version"));
-		LogUtil.writeLog("java_vm_specification_vendor:"
-				+ System.getProperty("java.vm.specification.vendor"));
-		LogUtil.writeLog("java_vm_specification_name:"
-				+ System.getProperty("java.vm.specification.name"));
-		LogUtil.writeLog("java_vm_version:"
-				+ System.getProperty("java.vm.version"));
+		LogUtil.writeLog("java_vm_specification_version:" + System.getProperty("java.vm.specification.version"));
+		LogUtil.writeLog("java_vm_specification_vendor:" + System.getProperty("java.vm.specification.vendor"));
+		LogUtil.writeLog("java_vm_specification_name:" + System.getProperty("java.vm.specification.name"));
+		LogUtil.writeLog("java_vm_version:" + System.getProperty("java.vm.version"));
 		LogUtil.writeLog("java_vm_name:" + System.getProperty("java.vm.name"));
 		LogUtil.writeLog("java.version:" + System.getProperty("java.version"));
 		LogUtil.writeLog("java.vm.vendor=[" + System.getProperty("java.vm.vendor") + "]");
 		LogUtil.writeLog("java.version=[" + System.getProperty("java.version") + "]");
 		printProviders();
-		LogUtil.writeLog("================= SYS INFO end=====================");
+		LogUtil.writeLog("================= SYS INFO end =====================");
 	}
 	
 	/**
@@ -770,21 +402,36 @@ public class CertUtil {
 		}
 	}
 
-	/**
-	 * 证书文件过滤器
-	 * 
-	 */
-	static class CerFilter implements FilenameFilter {
-		public boolean isCer(String name) {
-			if (name.toLowerCase().endsWith(".cer")) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		public boolean accept(File dir, String name) {
-			return isCer(name);
-		}
+	public static KeyStore getKeyStore() {
+		return keyStore;
+	}
+
+	public static X509Certificate getMiddleCert() {
+		return middleCert;
+	}
+
+	public static X509Certificate getRootCert() {
+		return rootCert;
+	}
+
+	public static X509Certificate getEncryptCert() {
+		return encryptCert;
+	}
+
+	public static PublicKey getEncryptTrackPublicKey() {
+		return encryptTrackKey;
+	}
+
+	public static String getEncryptCertId() {
+		return encryptCert.getSerialNumber().toString();
+	}
+
+	public static void resetEncryptCertPublicKey() {
+		encryptCert = null;
+	}
+
+	public static PublicKey getValidatePublicKey(String certId) {
+		return certMap.get(certId).getPublicKey();
 	}
 
 }

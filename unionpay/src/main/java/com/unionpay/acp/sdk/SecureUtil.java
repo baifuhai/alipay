@@ -241,6 +241,7 @@ public class SecureUtil {
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		return tByte;
@@ -260,6 +261,7 @@ public class SecureUtil {
 				temp = temp + 2;
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return tByte;
 	}

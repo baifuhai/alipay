@@ -21,5 +21,5 @@ public class IndexController {
         map.put("tradeList", tradeList);
         return "index";
     }
-    
+
 }

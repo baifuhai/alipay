@@ -1,16 +1,14 @@
 package com.test.unionpay.controller;
 
-import com.unionpay.acp.demo.DemoBase;
+import com.test.unionpay.util.DemoUtil;
 import com.unionpay.acp.sdk.AcpService;
 import com.unionpay.acp.sdk.LogUtil;
 import com.unionpay.acp.sdk.SDKConfig;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,7 +29,7 @@ public class AuthController {
      */
     @RequestMapping("form_6_7_1_AuthDeal_Front")
     public void form_6_7_1_AuthDeal_Front(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        SDKConfig config = SDKConfig.config;
+        SDKConfig config = SDKConfig.getInstance();
 
         /**
          * 请求银联接入地址，获取证书文件，证书路径等相关参数初始化到SDKConfig类中
@@ -59,8 +57,8 @@ public class AuthController {
         /***商户接入参数***/
         requestData.put("merId", merId);    	          			  //商户号码，请改成自己申请的正式商户号或者open上注册得来的777测试商户号
         requestData.put("accessType", "0");             			  //接入类型，0：直连商户
-        requestData.put("orderId", DemoBase.getOrderId());             //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则
-        requestData.put("txnTime", DemoBase.getCurrentTime());        //订单发送时间，取系统时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
+        requestData.put("orderId", DemoUtil.getOrderId());             //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则
+        requestData.put("txnTime", DemoUtil.getCurrentTime());        //订单发送时间，取系统时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
         requestData.put("currencyCode", "156");         			  //交易币种（境内商户一般是156 人民币）
         requestData.put("txnAmt", txnAmt);             			      //交易金额，单位分，不要带小数点
         //requestData.put("reqReserved", "透传字段");        		      //请求方保留域，如需使用请启用即可；透传字段（可以实现商户自定义参数的追踪）本交易的后台通知,对本交易的交易状态查询交易、对账文件中均会原样返回，商户可以按需上传，长度为1-1024个字节。出现&={}[]符号时可能导致查询接口应答报文解析失败，建议尽量只传字母数字并使用|分割，或者可以最外层做一次base64编码(base64编码之后出现的等号不会导致解析失败可以不用管)。
@@ -112,7 +110,7 @@ public class AuthController {
      */
     @RequestMapping("form_6_7_2_AuthUndo")
     public void form_6_7_2_AuthUndo(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        SDKConfig config = SDKConfig.config;
+        SDKConfig config = SDKConfig.getInstance();
 
         String origQryId = req.getParameter("origQryId");
         String txnAmt = req.getParameter("txnAmt");
@@ -132,8 +130,8 @@ public class AuthController {
         /***商户接入参数***/
         data.put("merId", merId);             //商户号码，请改成自己申请的商户号或者open上注册得来的777商户号测试
         data.put("accessType", "0");                      //接入类型，商户接入固定填0，不需修改
-        data.put("orderId", DemoBase.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
-        data.put("txnTime", DemoBase.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
+        data.put("orderId", DemoUtil.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
+        data.put("txnTime", DemoUtil.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
         data.put("txnAmt", txnAmt);                       //【撤销金额】，撤销时必须和原消费金额相同
         data.put("currencyCode", "156");                  //交易币种(境内商户一般是156 人民币)
         //data.put("reqReserved", "透传信息");                 //请求方保留域，如需使用请启用即可；透传字段（可以实现商户自定义参数的追踪）本交易的后台通知,对本交易的交易状态查询交易、对账文件中均会原样返回，商户可以按需上传，长度为1-1024个字节。出现&={}[]符号时可能导致查询接口应答报文解析失败，建议尽量只传字母数字并使用|分割，或者可以最外层做一次base64编码(base64编码之后出现的等号不会导致解析失败可以不用管)。
@@ -176,8 +174,8 @@ public class AuthController {
             //未返回正确的http状态
             LogUtil.writeErrorLog("未获取到返回报文或返回http状态码非200");
         }
-        String reqMessage = DemoBase.genHtmlResult(reqData);
-        String rspMessage = DemoBase.genHtmlResult(rspData);
+        String reqMessage = DemoUtil.genHtmlResult(reqData);
+        String rspMessage = DemoUtil.genHtmlResult(rspData);
         resp.getWriter().write("</br>请求报文:<br/>"+reqMessage+"<br/>" + "应答报文:</br>"+rspMessage+"");
     }
 
@@ -191,7 +189,7 @@ public class AuthController {
      */
     @RequestMapping("form_6_7_3_AuthFinish")
     public void form_6_7_3_AuthFinish(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-        SDKConfig config = SDKConfig.config;
+        SDKConfig config = SDKConfig.getInstance();
 
         String origQryId = req.getParameter("origQryId");
         String txnAmt = req.getParameter("txnAmt");
@@ -211,8 +209,8 @@ public class AuthController {
         /***商户接入参数***/
         data.put("merId", merId);             //商户号码，请改成自己申请的商户号或者open上注册得来的777商户号测试
         data.put("accessType", "0");                      //接入类型，商户接入固定填0，不需修改
-        data.put("orderId", DemoBase.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
-        data.put("txnTime", DemoBase.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
+        data.put("orderId", DemoUtil.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
+        data.put("txnTime", DemoUtil.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
         data.put("txnAmt", txnAmt);                       //【完成金额】，金额范围为预授权金额的0-115%
         data.put("currencyCode", "156");                  //交易币种(境内商户一般是156 人民币)
         //data.put("reqReserved", "透传信息");                 //请求方保留域，如需使用请启用即可；透传字段（可以实现商户自定义参数的追踪）本交易的后台通知,对本交易的交易状态查询交易、对账文件中均会原样返回，商户可以按需上传，长度为1-1024个字节。出现&={}[]符号时可能导致查询接口应答报文解析失败，建议尽量只传字母数字并使用|分割，或者可以最外层做一次base64编码(base64编码之后出现的等号不会导致解析失败可以不用管)。
@@ -254,8 +252,8 @@ public class AuthController {
             //未返回正确的http状态
             LogUtil.writeErrorLog("未获取到返回报文或返回http状态码非200");
         }
-        String reqMessage = DemoBase.genHtmlResult(reqData);
-        String rspMessage = DemoBase.genHtmlResult(rspData);
+        String reqMessage = DemoUtil.genHtmlResult(reqData);
+        String rspMessage = DemoUtil.genHtmlResult(rspData);
         resp.getWriter().write("</br>请求报文:<br/>"+reqMessage+"<br/>" + "应答报文:</br>"+rspMessage+"");
     }
 
@@ -271,7 +269,7 @@ public class AuthController {
     @RequestMapping("form_6_7_4_AuthFinishUndo")
     public void form_6_7_4_AuthFinishUndo(HttpServletRequest req, HttpServletResponse resp) throws Exception {
 
-        SDKConfig config = SDKConfig.config;
+        SDKConfig config = SDKConfig.getInstance();
 
         String origQryId = req.getParameter("origQryId");
         String txnAmt = req.getParameter("txnAmt");
@@ -291,8 +289,8 @@ public class AuthController {
         /***商户接入参数***/
         data.put("merId", merId);             //商户号码，请改成自己申请的商户号或者open上注册得来的777商户号测试
         data.put("accessType", "0");                      //接入类型，商户接入固定填0，不需修改
-        data.put("orderId", DemoBase.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
-        data.put("txnTime", DemoBase.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
+        data.put("orderId", DemoUtil.getOrderId());       //商户订单号，8-40位数字字母，不能含“-”或“_”，可以自行定制规则，重新产生，不同于原消费
+        data.put("txnTime", DemoUtil.getCurrentTime());   //订单发送时间，格式为YYYYMMDDhhmmss，必须取当前时间，否则会报txnTime无效
         data.put("txnAmt", txnAmt);                       //【完成金额】，金额范围为预授权金额的0-115%
         data.put("currencyCode", "156");                  //交易币种(境内商户一般是156 人民币)
         //data.put("reqReserved", "透传信息");                 //如需使用请启用即可；请求方保留域，透传字段（可以实现商户自定义参数的追踪）本交易的后台通知,对本交易的交易状态查询交易、对账文件中均会原样返回，商户可以按需上传，长度为1-1024个字节。出现&={}[]符号时可能导致查询接口应答报文解析失败，建议尽量只传字母数字并使用|分割，或者可以最外层做一次base64编码(base64编码之后出现的等号不会导致解析失败可以不用管)。
@@ -336,10 +334,9 @@ public class AuthController {
             //未返回正确的http状态
             LogUtil.writeErrorLog("未获取到返回报文或返回http状态码非200");
         }
-        String reqMessage = DemoBase.genHtmlResult(reqData);
-        String rspMessage = DemoBase.genHtmlResult(rspData);
+        String reqMessage = DemoUtil.genHtmlResult(reqData);
+        String rspMessage = DemoUtil.genHtmlResult(rspData);
         resp.getWriter().write("</br>请求报文:<br/>"+reqMessage+"<br/>" + "应答报文:</br>"+rspMessage+"");
     }
-
 
 }
