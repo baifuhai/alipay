@@ -1,5 +1,7 @@
 package com.test.wxpay.util;
 
+import com.helpwin.util.Base64Util;
+import com.helpwin.util.MD5Util;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.Cipher;

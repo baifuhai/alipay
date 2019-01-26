@@ -1,8 +1,8 @@
 package com.test.unionpay.controller;
 
+import com.helpwin.bean.ResponseBean;
+import com.helpwin.util.WebUtil;
 import com.test.unionpay.util.DemoUtil;
-import com.test.unionpay.util.ResponseBean;
-import com.test.unionpay.util.WebUtil;
 import com.unionpay.acp.sdk.AcpService;
 import com.unionpay.acp.sdk.SDKConfig;
 import com.unionpay.acp.sdk.SDKConstants;

@@ -2,12 +2,12 @@ package com.test.alipay.controller;
 
 import com.alipay.api.response.*;
 import com.google.gson.Gson;
+import com.helpwin.bean.ResponseBean;
+import com.helpwin.util.WebUtil;
 import com.test.alipay.dao.TradeDao;
 import com.test.alipay.model.Trade;
 import com.test.alipay.service.AlipayService;
 import com.test.alipay.util.AlipayUtil;
-import com.test.alipay.util.ResponseBean;
-import com.test.alipay.util.WebUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.PrintWriter;
 import java.text.DecimalFormat;
 
 @RequestMapping("alipay")

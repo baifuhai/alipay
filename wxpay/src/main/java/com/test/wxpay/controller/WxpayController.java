@@ -2,15 +2,13 @@ package com.test.wxpay.controller;
 
 import com.github.wxpay.sdk.WXPay;
 import com.google.gson.Gson;
+import com.helpwin.bean.ResponseBean;
+import com.helpwin.util.WebUtil;
 import com.test.wxpay.config.MyWxpayConfig;
 import com.test.wxpay.util.AESUtil;
 import com.test.wxpay.util.MyUtil;
-import com.test.wxpay.util.ResponseBean;
-import com.test.wxpay.util.WebUtil;
 import com.wxpay.api.WXPayUtil;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +69,7 @@ public class WxpayController {
                 Map<String, String> map = MyUtil.getAppParamsMap(prepayId, wxpayConfig);
                 WebUtil.writeJson(new Gson().toJson(ResponseBean.getSuccess(map)), response);
             } else if ("NATIVE".equals(tradeType2)) {
-                WebUtil.urlToImage(codeUrl, response.getOutputStream());
+                //WebUtil.urlToImage(codeUrl, response.getOutputStream());
             } else {
                 WebUtil.writeJson(new Gson().toJson(ResponseBean.getFailure(failure, resp)), response);
             }

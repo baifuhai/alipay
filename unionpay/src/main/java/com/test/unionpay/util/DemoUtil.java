@@ -26,20 +26,24 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class DemoUtil {
 
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat sdf2 = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+
     // 商户发送交易时间
     public static String getCurrentTime() {
-        return new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        return sdf.format(new Date());
     }
 
     // 商户订单号，不能含"-"或"_"
     public static String getOrderId() {
-        return new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date());
+        return sdf2.format(new Date()) + new Random().nextInt(1000);
     }
 
     /**

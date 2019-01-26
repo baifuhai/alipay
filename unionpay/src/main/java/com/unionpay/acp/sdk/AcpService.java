@@ -1,7 +1,5 @@
 package com.unionpay.acp.sdk;
 
-import com.test.unionpay.util.DemoUtil;
-import com.test.unionpay.util.WebUtil;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
